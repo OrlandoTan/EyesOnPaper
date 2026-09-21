@@ -308,6 +308,76 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &269066384
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 269066385}
+  - component: {fileID: 269066386}
+  - component: {fileID: 269066387}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &269066385
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 269066384}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.45857, y: 1.00656, z: -8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &269066386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 269066384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d970fd16e681149fc8f51b7b575fd633, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  examDuration: 300
+  showPlaceholderUI: 1
+  restartKey: 32
+  lowTimeWarning: 30
+--- !u!114 &269066387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 269066384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46070cb50f9d54385adc86dac45e9216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExamLockout
+  freezeWholePlayer: 1
+  playerTag: Player
+  freezeScriptsOn: []
+  disableOnEnd:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  hideOnEnd: []
+  releaseCursor: 1
 --- !u!1 &280364115
 GameObject:
   m_ObjectHideFlags: 0
@@ -552,6 +622,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 615803662}
     m_Modifications:
+    - target: {fileID: 310246018961231551, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 310246018961231551, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 310246018961231551, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 310246018961231551, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4032637842881256324, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
       propertyPath: m_LocalPosition.x
       value: -5.6
@@ -598,19 +684,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 300
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -50
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7766752913780566752, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1768,6 +1862,8 @@ GameObject:
   - component: {fileID: 1517777461}
   - component: {fileID: 1517777462}
   - component: {fileID: 1517777463}
+  - component: {fileID: 1517777465}
+  - component: {fileID: 1517777464}
   m_Layer: 0
   m_Name: Invigilator
   m_TagString: Untagged
@@ -1908,6 +2004,16 @@ MonoBehaviour:
   roomCentre: {fileID: 2088311882}
   wanderRadius: 7
   sampleTolerance: 2
+  suspicion: {fileID: 0}
+  vision: {fileID: 0}
+  investigateSpeed: 1.9
+  investigateStandoff: 1.6
+  investigateRepathInterval: 0.3
+  turnSpeed: 220
+  scanChance: 0.45
+  scanPause: {x: 3, y: 5}
+  scanSweep: 75
+  scanSpeed: 40
   walkSpeed: 1.2
   pauseRange: {x: 1, y: 3}
 --- !u!114 &1517777463
@@ -1929,9 +2035,59 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   lookAwayAngle: 45
+  eyeContactAngle: 25
   headChildName: Head
   refindInterval: 1
   showReadout: 1
+--- !u!114 &1517777464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1517777456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00d53aa39310f43c099a8fdfa18b8157, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SuspicionMeter
+  vision: {fileID: 0}
+  mediumAt: 40
+  highAt: 75
+  phoneInConeGain: 40
+  lookAwayGain: 6
+  decay: 5
+  sidewaysAngle: 50
+  overShoulderAngle: 100
+  lookAwayGrace: 1.5
+  overShoulderGain: 12
+  eyeContactGain: 30
+  nearDistance: 2
+  farDistance: 12
+  nearGainMultiplier: 2
+  farGainMultiplier: 0.6
+  lockDuration: 6
+  lockedDecay: 1
+  buzzSpikeNear: 25
+  buzzSpikeFar: 4
+  buzzHearRadius: 6
+--- !u!114 &1517777465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1517777456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abd117c6c5f1b48b4ac73ba81176958f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InvigilatorDebugHUD
+  suspicion: {fileID: 0}
+  vision: {fileID: 0}
+  invigilator: {fileID: 0}
+  showBar: 1
+  enableDebugKeys: 1
 --- !u!1001 &1560457547
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2716,3 +2872,4 @@ SceneRoots:
   - {fileID: 1561872244}
   - {fileID: 1517777460}
   - {fileID: 2088311882}
+  - {fileID: 269066385}
