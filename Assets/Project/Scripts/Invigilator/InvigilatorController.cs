@@ -2,67 +2,82 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// Step 2: the invigilator walks to a random point on the NavMesh, pauses, and
-/// goes again. Suspicion tiers and the vision cone get layered on top of this
-/// later — for now it just needs to look like someone patrolling a room.
+/// Moves the invigilator, and — importantly — is the *only* thing that rotates them.
+///
+/// The NavMeshAgent's own updateRotation is switched off for good in Awake. Every
+/// heading goes through FaceYaw, which turns at a fixed rate, so the vision cone
+/// can never snap. Three things want to aim the body (walking, scanning, staring
+/// at a suspect) and letting any two of them both write the transform is what made
+/// the cone teleport.
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 public class InvigilatorController : MonoBehaviour
 {
-    [Header("Where they roam")]
-    [Tooltip("Centre of the wander area. Leave empty to use wherever this starts.")]
-    [SerializeField] private Transform roomCentre;
-    [SerializeField] private float wanderRadius = 7f;
-    [Tooltip("How far off a random point we'll accept a spot on the NavMesh.")]
-    [SerializeField] private float sampleTolerance = 2f;
-
-    [Header("Investigating")]
+    [Header("Refs")]
     [SerializeField] private SuspicionMeter suspicion;
     [SerializeField] private VisionCone vision;
-    [Tooltip("Speed while locked onto the player. Faster than a patrol.")]
-    [SerializeField] private float investigateSpeed = 1.9f;
-    [Tooltip("How close they plant themselves next to the desk.")]
-    [SerializeField] private float investigateStandoff = 1.6f;
-    [SerializeField] private float investigateRepathInterval = 0.3f;
-    [Tooltip("Degrees per second when turning to stare.")]
-    [SerializeField] private float turnSpeed = 220f;
+    [Tooltip("Middle of the room. Also what they turn to face when they stop.")]
+    [SerializeField] private Transform roomCentre;
 
-    [Header("Scanning")]
-    [Tooltip("Chance that any given stop becomes a slow sweep of the room.")]
-    [Range(0f, 1f)]
-    [SerializeField] private float scanChance = 0.45f;
-    [Tooltip("How long a scanning stop lasts, instead of the normal pause.")]
-    [SerializeField] private Vector2 scanPause = new Vector2(3f, 5f);
-    [Tooltip("Degrees either side of where they stopped.")]
-    [SerializeField] private float scanSweep = 75f;
-    [Tooltip("Degrees per second while sweeping.")]
-    [SerializeField] private float scanSpeed = 40f;
+    [Header("Wander area")]
+    [SerializeField] private float wanderRadius = 7f;
+    [SerializeField] private float sampleTolerance = 2f;
+    [Tooltip("Reject stopping spots closer than this to the last one, so they don't loiter.")]
+    [SerializeField] private float minTravel = 3f;
 
     [Header("Pace")]
     [SerializeField] private float walkSpeed = 1.2f;
-    [Tooltip("Seconds to stand still on arrival: random between x and y.")]
     [SerializeField] private Vector2 pauseRange = new Vector2(1f, 3f);
 
+    [Header("Investigating")]
+    [SerializeField] private float investigateSpeed = 1.9f;
+    [SerializeField] private float investigateStandoff = 1.6f;
+    [SerializeField] private float investigateRepathInterval = 0.3f;
+
+    [Header("Scanning")]
+    [Range(0f, 1f)]
+    [SerializeField] private float scanChance = 0.45f;
+    [SerializeField] private Vector2 scanPause = new Vector2(3f, 5f);
+    [SerializeField] private float scanSweep = 70f;
+    [SerializeField] private float scanSpeed = 40f;
+    [Tooltip("Chance a stop faces the player's desk rather than the middle of the room.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float lookAtPlayerChance = 0.4f;
+
+    [Header("Turning")]
+    [Tooltip("Degrees per second. Everything turns at this rate — nothing ever snaps.")]
+    [SerializeField] private float turnSpeed = 160f;
+    [Tooltip("Below this speed they're treated as standing still.")]
+    [SerializeField] private float movingThreshold = 0.15f;
+
     public bool IsStopped { get; private set; }
+    public bool IsScanning { get; private set; }
 
     private NavMeshAgent agent;
     private Vector3 home;
+    private Vector3 lastStop;
+
     private float pauseTimer;
     private float repathTimer;
     private bool wasLocked;
     private bool arrivalHandled;
-    private bool scanning;
-    private float scanBaseYaw;
-    private float scanPhase;
 
-    public bool IsScanning => scanning;
+    private float restingYaw;     // heading a stop settles on
+    private float scanPhase;
+    private float scanDirection = 1f;
 
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
         if (suspicion == null) suspicion = GetComponent<SuspicionMeter>();
         if (vision == null) vision = GetComponentInChildren<VisionCone>();
+
         home = roomCentre != null ? roomCentre.position : transform.position;
+        lastStop = transform.position;
+        restingYaw = transform.eulerAngles.y;
+
+        // One owner for rotation. This never gets turned back on.
+        agent.updateRotation = false;
     }
 
     private void OnEnable()
@@ -94,8 +109,8 @@ public class InvigilatorController : MonoBehaviour
     {
         if (IsStopped || !agent.isOnNavMesh) return;
 
-        // Seen with the phone out? Drop the patrol and go stand over them.
-        if (suspicion != null && suspicion.IsLocked && vision != null && vision.HasPlayer)
+        bool locked = suspicion != null && suspicion.IsLocked && vision != null && vision.HasPlayer;
+        if (locked)
         {
             Investigate();
             wasLocked = true;
@@ -104,17 +119,24 @@ public class InvigilatorController : MonoBehaviour
 
         if (wasLocked)
         {
-            // Lock just expired — back to patrolling.
             wasLocked = false;
-            agent.updateRotation = true;
             agent.speed = walkSpeed;
             PickDestination();
         }
 
-        if (agent.pathPending) return;
+        Patrol();
+    }
 
-        // Still walking?
-        if (agent.remainingDistance > Mathf.Max(agent.stoppingDistance, 0.35f)) return;
+    // ---------- patrol ----------
+
+    private void Patrol()
+    {
+        if (agent.pathPending || !Arrived())
+        {
+            IsScanning = false;
+            FaceTravel();
+            return;
+        }
 
         if (!arrivalHandled)
         {
@@ -122,37 +144,66 @@ public class InvigilatorController : MonoBehaviour
             BeginStop();
         }
 
-        if (scanning) SweepLook();
+        FaceRest();
 
         pauseTimer -= Time.deltaTime;
         if (pauseTimer <= 0f) PickDestination();
     }
 
-    /// <summary>Some stops are a stretch of the legs. Some are a look around the room.</summary>
+    private bool Arrived() =>
+        agent.remainingDistance <= Mathf.Max(agent.stoppingDistance, 0.35f);
+
+    /// <summary>Decide what this stop is: a breather, or a look around the room.</summary>
     private void BeginStop()
     {
-        scanning = Random.value < scanChance;
-        if (!scanning) return;
+        lastStop = transform.position;
+        IsScanning = Random.value < scanChance;
+
+        // Face something worth facing. Standing nose-to-the-wall is what a
+        // random heading gives you, and it reads as a broken robot.
+        Vector3 lookAt = ChooseLookTarget();
+        Vector3 flat = Vector3.ProjectOnPlane(lookAt - transform.position, Vector3.up);
+        restingYaw = flat.sqrMagnitude > 0.01f
+            ? Quaternion.LookRotation(flat).eulerAngles.y
+            : transform.eulerAngles.y;
+
+        if (!IsScanning) return;
 
         pauseTimer = Random.Range(scanPause.x, scanPause.y);
-        scanBaseYaw = transform.eulerAngles.y;
-        scanPhase = Random.value * Mathf.PI * 2f;   // don't always sweep the same way first
-        agent.updateRotation = false;
+        scanPhase = 0f;                                        // starts centred: no snap
+        scanDirection = Random.value < 0.5f ? -1f : 1f;        // vary which way they look first
     }
 
-    private void SweepLook()
+    private Vector3 ChooseLookTarget()
     {
-        scanPhase += scanSpeed * Mathf.Deg2Rad * Time.deltaTime;
-        float offset = Mathf.Sin(scanPhase) * scanSweep;
-        transform.rotation = Quaternion.Euler(0f, scanBaseYaw + offset, 0f);
+        bool towardPlayer = vision != null && vision.HasPlayer && Random.value < lookAtPlayerChance;
+        if (towardPlayer) return vision.PlayerRoot.position;
+
+        // Middle of the room means most of the class, and never a wall.
+        if ((home - transform.position).sqrMagnitude > 1f) return home;
+
+        // Standing on the centre already — pick a heading at random instead.
+        return transform.position + Quaternion.Euler(0f, Random.Range(0f, 360f), 0f) * Vector3.forward;
     }
 
-    /// <summary>Walk straight at the player and keep staring, however they squirm.</summary>
+    private void PickDestination()
+    {
+        IsScanning = false;
+        arrivalHandled = false;
+
+        if (TrySamplePoint(home, wanderRadius, out Vector3 point))
+            agent.SetDestination(point);
+
+        pauseTimer = Random.Range(pauseRange.x, pauseRange.y);
+    }
+
+    // ---------- investigating ----------
+
     private void Investigate()
     {
         Transform player = vision.PlayerRoot;
         agent.speed = investigateSpeed;
-        agent.updateRotation = false;   // we do the turning, so they stare while walking
+        IsScanning = false;
 
         repathTimer -= Time.deltaTime;
         if (repathTimer <= 0f)
@@ -168,49 +219,90 @@ public class InvigilatorController : MonoBehaviour
                 agent.SetDestination(point);
         }
 
-        Vector3 flat = Vector3.ProjectOnPlane(player.position - transform.position, Vector3.up);
-        if (flat.sqrMagnitude > 0.01f)
-        {
-            transform.rotation = Quaternion.RotateTowards(
-                transform.rotation, Quaternion.LookRotation(flat), turnSpeed * Time.deltaTime);
-        }
+        FaceTowards(player.position);
     }
 
-    private void PickDestination()
+    // ---------- rotation, the only place the transform is turned ----------
+
+    private void FaceTravel()
     {
-        scanning = false;
-        arrivalHandled = false;
-        agent.updateRotation = true;
+        Vector3 velocity = agent.velocity;
+        velocity.y = 0f;
+        if (velocity.magnitude < movingThreshold) return;   // keep the last heading, don't spin
 
-        if (TrySamplePoint(home, wanderRadius, out Vector3 point))
-            agent.SetDestination(point);
-
-        pauseTimer = Random.Range(pauseRange.x, pauseRange.y);
+        FaceYaw(Quaternion.LookRotation(velocity).eulerAngles.y);
     }
 
-    /// <summary>Random point in a disc, snapped onto the NavMesh. False if nothing stuck.</summary>
+    private void FaceRest()
+    {
+        float yaw = restingYaw;
+
+        if (IsScanning)
+        {
+            scanPhase += scanSpeed * Mathf.Deg2Rad * Time.deltaTime * scanDirection;
+            yaw += Mathf.Sin(scanPhase) * scanSweep;
+        }
+
+        FaceYaw(yaw);
+    }
+
+    private void FaceTowards(Vector3 worldPoint)
+    {
+        Vector3 flat = Vector3.ProjectOnPlane(worldPoint - transform.position, Vector3.up);
+        if (flat.sqrMagnitude < 0.01f) return;
+
+        FaceYaw(Quaternion.LookRotation(flat).eulerAngles.y);
+    }
+
+    private void FaceYaw(float targetYaw)
+    {
+        transform.rotation = Quaternion.RotateTowards(
+            transform.rotation,
+            Quaternion.Euler(0f, targetYaw, 0f),
+            turnSpeed * Time.deltaTime);
+    }
+
+    // ---------- helpers ----------
+
+    /// <summary>
+    /// Random point in a disc, snapped to the NavMesh. Prefers somewhere actually
+    /// worth walking to — a point two steps away makes them look twitchy.
+    /// </summary>
     private bool TrySamplePoint(Vector3 around, float radius, out Vector3 result)
     {
-        for (int i = 0; i < 12; i++)
+        Vector3 fallback = transform.position;
+        bool haveFallback = false;
+
+        for (int i = 0; i < 16; i++)
         {
             Vector2 disc = Random.insideUnitCircle * radius;
             Vector3 candidate = around + new Vector3(disc.x, 0f, disc.y);
 
-            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, sampleTolerance, NavMesh.AllAreas))
+            if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, sampleTolerance, NavMesh.AllAreas))
+                continue;
+
+            if ((hit.position - lastStop).sqrMagnitude >= minTravel * minTravel)
             {
                 result = hit.position;
                 return true;
             }
+
+            if (!haveFallback)
+            {
+                fallback = hit.position;
+                haveFallback = true;
+            }
         }
 
-        result = transform.position;
-        return false;
+        result = fallback;
+        return haveFallback;
     }
 
     private void Stop()
     {
         IsStopped = true;
-        if (agent != null) agent.updateRotation = true;
+        IsScanning = false;
+
         if (agent != null && agent.isOnNavMesh)
         {
             agent.isStopped = true;
