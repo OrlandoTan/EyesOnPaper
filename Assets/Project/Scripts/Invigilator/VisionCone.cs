@@ -23,6 +23,10 @@ public class VisionCone : MonoBehaviour
     [Tooltip("Head turned further than this off their own paper counts as looking sideways.")]
     [SerializeField] private float lookAwayAngle = 45f;
 
+    [Header("Eye contact")]
+    [Tooltip("How closely the player's head must point at the invigilator to count as meeting their eye.")]
+    [SerializeField] private float eyeContactAngle = 25f;
+
     [Header("Player lookup")]
     [SerializeField] private string headChildName = "Head";
     [SerializeField] private float refindInterval = 1f;
@@ -37,6 +41,10 @@ public class VisionCone : MonoBehaviour
     /// <summary>Degrees the head is turned off the player root's forward. Yaw only.</summary>
     public float PlayerLookAwayAngle { get; private set; }
     public bool PlayerIsLookingAway => PlayerHead != null && PlayerLookAwayAngle > lookAwayAngle;
+    /// <summary>Degrees between where the player's head points and the invigilator. 0 = dead on.</summary>
+    public float PlayerGazeOffset { get; private set; } = 180f;
+    /// <summary>They're looking at each other. Needs the invigilator to see them too.</summary>
+    public bool PlayerIsLookingAtMe => CanSeePlayer && PlayerGazeOffset <= eyeContactAngle;
     public bool HasPlayer => PlayerHead != null;
 
     public Transform PlayerRoot { get; private set; }
@@ -77,6 +85,7 @@ public class VisionCone : MonoBehaviour
                        && HasClearLine(origin, toHead);
 
         PlayerLookAwayAngle = MeasureLookAway();
+        PlayerGazeOffset = MeasureGazeOffset(origin);
     }
 
     private bool HasClearLine(Vector3 origin, Vector3 toHead)
@@ -87,6 +96,18 @@ public class VisionCone : MonoBehaviour
 
         // Hitting the player themselves still counts as seeing them.
         return PlayerRoot != null && hit.transform.IsChildOf(PlayerRoot);
+    }
+
+    /// <summary>Yaw-only, so looking down at the phone doesn't read as breaking eye contact.</summary>
+    private float MeasureGazeOffset(Vector3 eyePosition)
+    {
+        if (PlayerHead == null) return 180f;
+
+        Vector3 headForward = Vector3.ProjectOnPlane(PlayerHead.forward, Vector3.up);
+        Vector3 toInvigilator = Vector3.ProjectOnPlane(eyePosition - PlayerHead.position, Vector3.up);
+        if (headForward.sqrMagnitude < 0.001f || toInvigilator.sqrMagnitude < 0.001f) return 180f;
+
+        return Vector3.Angle(headForward, toInvigilator);
     }
 
     private float MeasureLookAway()
@@ -116,7 +137,7 @@ public class VisionCone : MonoBehaviour
         }
 
         PlayerRoot = player.transform;
-        PlayerHead = FindDeep(PlayerRoot, headChildName);
+        PlayerHead = FindHead(PlayerRoot, headChildName);
 
         if (PlayerHead == null)
         {
@@ -128,15 +149,23 @@ public class VisionCone : MonoBehaviour
         warnedNoPlayer = false;
     }
 
-    private static Transform FindDeep(Transform parent, string childName)
+    /// <summary>
+    /// Finds the head. If more than one object carries the name — a leftover
+    /// stand-in alongside the real one, say — the one holding the camera wins,
+    /// because that is the head the player actually looks through.
+    /// </summary>
+    private static Transform FindHead(Transform root, string childName)
     {
-        if (parent.name == childName) return parent;
-        for (int i = 0; i < parent.childCount; i++)
+        Transform firstMatch = null;
+
+        foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
         {
-            Transform found = FindDeep(parent.GetChild(i), childName);
-            if (found != null) return found;
+            if (t.name != childName) continue;
+            if (t.GetComponentInChildren<Camera>(true) != null) return t;
+            if (firstMatch == null) firstMatch = t;
         }
-        return null;
+
+        return firstMatch;
     }
 
     private void OnGUI()
