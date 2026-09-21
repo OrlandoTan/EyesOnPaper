@@ -7,8 +7,12 @@ public class SeatedLook : MonoBehaviour
     [SerializeField] float sensitivity = 0.1f;
     [SerializeField] float yawLimit = 150f;
     [SerializeField] float pitchUp = 30f;
-    [SerializeField] float pitchDown = 40f;     // can't see under the desk normally
+    [SerializeField] float pitchDown = 65f;     // enough to read the papers, not to see the phone
     [SerializeField] float startPitch = 20f;
+
+    [Header("Lean in (hold right mouse)")]
+    [SerializeField] float leanFOV = 38f;       // zoomed view for reading the papers
+    [SerializeField] float leanSpeed = 8f;
 
     [Header("Phone look")]
     [SerializeField] Transform phoneFocus;      // drag PhoneFocus here
@@ -19,6 +23,7 @@ public class SeatedLook : MonoBehaviour
     float freeFOV;
     float yaw, pitch;
     float blend;          // 0 = free look, 1 = locked on phone
+    float leanBlend;      // 0 = normal, 1 = leaning in
     bool phoneMode;
 
     public bool IsLookingAtPhone => blend >= 0.99f;
@@ -51,9 +56,15 @@ public class SeatedLook : MonoBehaviour
 
     void Update()
     {
+        bool leanHeld = !phoneMode && Mouse.current != null && Mouse.current.rightButton.isPressed;
+        leanBlend = Mathf.MoveTowards(leanBlend, leanHeld ? 1f : 0f, Time.deltaTime * leanSpeed);
+        float leanEased = Mathf.SmoothStep(0f, 1f, leanBlend);
+
         if (!phoneMode && Mouse.current != null)
         {
-            Vector2 d = Mouse.current.delta.ReadValue() * sensitivity;
+            // Slower look while zoomed so the reticle is easy to aim
+            float zoomScale = Mathf.Lerp(1f, leanFOV / Mathf.Max(1f, freeFOV), leanEased);
+            Vector2 d = Mouse.current.delta.ReadValue() * sensitivity * zoomScale;
             yaw = Mathf.Clamp(yaw + d.x, -yawLimit, yawLimit);
             pitch = Mathf.Clamp(pitch - d.y, -pitchUp, pitchDown);
         }
@@ -65,7 +76,8 @@ public class SeatedLook : MonoBehaviour
         Quaternion phoneLook = PhoneLookRotation();
 
         transform.localRotation = Quaternion.Slerp(freeLook, phoneLook, eased);
-        cam.fieldOfView = Mathf.Lerp(freeFOV, phoneFOV, eased);
+        float baseFOV = Mathf.Lerp(freeFOV, leanFOV, leanEased);
+        cam.fieldOfView = Mathf.Lerp(baseFOV, phoneFOV, eased);
     }
 
     // Rotation (local to PlayerRig) that points Head straight at the phone
