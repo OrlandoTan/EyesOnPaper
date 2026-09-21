@@ -122,9 +122,9 @@ All exposed as `[SerializeField]` so they can be tuned in the Inspector without 
 
 | Role | Owns | Folder |
 |---|---|---|
-| Dev A | Phone, combos, message queue, answer sheet | `Assets/_Project/Scripts/Phone/` |
-| Dev B | Invigilator, suspicion, game flow, timer, results | `Assets/_Project/Scripts/Invigilator/`, `Core/` |
-| Art / Audio | Room, invigilator model + Mixamo anims, UI art, SFX, trailer GIF | `Assets/_Project/Art/`, `Audio/` |
+| Dev A | Phone, combos, message queue, answer sheet | `Assets/Project/Scripts/Player/` |
+| Dev B | Invigilator, suspicion, game flow, timer, results | `Assets/Project/Scripts/Invigilator/`, `Core/` |
+| Art / Audio | Room, invigilator model + Mixamo anims, UI art, SFX, trailer GIF | `Assets/Project/Art/`, `Audio/` |
 
 **Scene owner:** Dev B owns `Main.unity`. Everyone else works in prefabs and personal test scenes. Say "taking Main" / "releasing Main" in Discord.
 
@@ -169,7 +169,7 @@ All exposed as `[SerializeField]` so they can be tuned in the Inspector without 
 - **Save the scene before every commit** and read `git status`. If you changed something in the editor and no `.unity`/`.prefab` shows up, it isn't saved.
 - **Always commit `.meta` files with their asset.**
 - Merge to `main` 2–3× a day. `main` must always open and run.
-- Claude Code edits **only** `.cs` files under `Assets/_Project/Scripts/`. Never scenes, prefabs, `.meta`, or settings.
+- Claude Code edits **only** `.cs` files under `Assets/Project/Scripts/`. Never scenes, prefabs, `.meta`, or settings.
 - Upload a build to itch every evening.
 
 ---

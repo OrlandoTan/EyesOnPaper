@@ -16,11 +16,11 @@ Companion to [SCOPE.md](SCOPE.md). This is the **order of work** for a two-perso
 - [ ] Settle open decisions from SCOPE.md §9 (friend's name, title).
 - [ ] Create folders:
   ```
-  Assets/_Project/Scripts/Core/
-  Assets/_Project/Scripts/Player/
-  Assets/_Project/Scripts/Invigilator/
-  Assets/_Project/Prefabs/
-  Assets/_Project/Scenes/
+  Assets/Project/Scripts/Core/
+  Assets/Project/Scripts/Player/
+  Assets/Project/Scripts/Invigilator/
+  Assets/Project/Prefabs/
+  Assets/Project/Scenes/
   ```
 - [ ] Write and commit the contract (below). **Don't change it without telling each other.**
 - [ ] Agree the PlayerRig contract:
@@ -33,7 +33,7 @@ Companion to [SCOPE.md](SCOPE.md). This is the **order of work** for a two-perso
 ### The contract
 
 ```csharp
-// Assets/_Project/Scripts/Core/GameEvents.cs
+// Assets/Project/Scripts/Core/GameEvents.cs
 using System;
 
 public static class GameEvents
@@ -135,4 +135,4 @@ If the merge takes more than an hour, the contract was broken somewhere — chec
 - Save the scene before every commit; read `git status`.
 - Commit `.meta` files with their assets.
 - Only the scene owner saves `Main.unity`.
-- Claude Code edits only `.cs` under `Assets/_Project/Scripts/`.
+- Claude Code edits only `.cs` under `Assets/Project/Scripts/`.
