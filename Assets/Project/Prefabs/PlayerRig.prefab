@@ -472,6 +472,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7766752913780566752}
+  - component: {fileID: 1473254762963686236}
   m_Layer: 0
   m_Name: PlayerRig
   m_TagString: Player
@@ -500,6 +501,22 @@ Transform:
   - {fileID: 1779629242923832618}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!208 &1473254762963686236
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2813712818771637489}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.5, y: 0.5, z: 0.5}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &2813904415389061481
 GameObject:
   m_ObjectHideFlags: 0
@@ -1007,7 +1024,8 @@ MonoBehaviour:
   pitchUp: 30
   pitchDown: 40
   startPitch: 20
-  phonePitch: 80
+  phoneFocus: {fileID: 0}
+  phoneFOV: 22
   transitionTime: 0.25
 --- !u!1 &4706263696384219650
 GameObject:
