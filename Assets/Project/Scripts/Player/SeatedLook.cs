@@ -5,7 +5,7 @@ public class SeatedLook : MonoBehaviour
 {
     [Header("Free look")]
     [SerializeField] float sensitivity = 0.1f;
-    [SerializeField] float yawLimit = 70f;
+    [SerializeField] float yawLimit = 150f;
     [SerializeField] float pitchUp = 30f;
     [SerializeField] float pitchDown = 40f;     // can't see under the desk normally
     [SerializeField] float startPitch = 20f;

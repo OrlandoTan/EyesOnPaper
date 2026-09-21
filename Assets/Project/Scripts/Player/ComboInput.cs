@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using TMPro;
 
 public enum Arrow { Up, Down, Left, Right }
 
@@ -14,12 +15,24 @@ public class ComboInput : MonoBehaviour
     [SerializeField] PhoneController phone;       // auto-filled if on the same object
     [SerializeField] RectTransform arrowRow;      // PhoneCanvas/ArrowRow
     [SerializeField] Image arrowTemplate;         // ArrowRow/ArrowTemplate (disabled at runtime)
+    [SerializeField] TMP_Text statusText;         // PhoneCanvas/StatusText
 
     [Header("Colours")]
     [SerializeField] Color pendingColor = new Color(1f, 1f, 1f, 0.35f);
     [SerializeField] Color doneColor    = new Color(1f, 0.85f, 0.2f, 1f);
     [SerializeField] Color errorColor   = new Color(1f, 0.25f, 0.25f, 1f);
-    [SerializeField] float errorLockout = 0.25f;  // brief pause after a wrong arrow
+    [SerializeField] float errorLockout = 1.0f;   // penalty pause after a wrong arrow (phone stays out = risk)
+
+    [Header("Status messages")]
+    [SerializeField] string idleMessage     = "ENTER CODE";
+    [SerializeField] string errorMessage    = "INCORRECT CODE";
+    [SerializeField] string completeMessage = "UNLOCKED";
+    [SerializeField] Color  idleTextColor   = new Color(1f, 1f, 1f, 0.6f);
+    [SerializeField] bool   showCountdown   = true;   // "INCORRECT CODE\nTRY AGAIN IN 0.8s"
+
+    [Header("Error shake")]
+    [SerializeField] float shakeAmount = 18f;     // canvas units
+    [SerializeField] float shakeTime   = 0.3f;
 
     [Header("Testing (turn autoStart off once MessageQueue drives this)")]
     [SerializeField] bool autoStartOnShow = true;
@@ -38,11 +51,14 @@ public class ComboInput : MonoBehaviour
     int progress;
     bool completed;
     float errorTimer;
+    Vector2 rowBasePos;
 
     void Awake()
     {
         if (phone == null) phone = GetComponent<PhoneController>();
         if (arrowTemplate != null) arrowTemplate.gameObject.SetActive(false);
+        if (arrowRow != null) rowBasePos = arrowRow.anchoredPosition;
+        SetStatus("", idleTextColor);
     }
 
     void OnEnable()
@@ -67,7 +83,9 @@ public class ComboInput : MonoBehaviour
         progress = 0;
         completed = false;
         errorTimer = 0f;
+        ResetShake();
         Rebuild();
+        SetStatus(idleMessage, idleTextColor);
     }
 
     public void Clear()
@@ -75,7 +93,10 @@ public class ComboInput : MonoBehaviour
         sequence.Clear();
         progress = 0;
         completed = false;
+        errorTimer = 0f;
+        ResetShake();
         Rebuild();
+        SetStatus("", idleTextColor);
     }
 
     // ---------- Phone events ----------
@@ -101,8 +122,17 @@ public class ComboInput : MonoBehaviour
         if (errorTimer > 0f)
         {
             errorTimer -= Time.deltaTime;
-            if (errorTimer <= 0f) Refresh();
-            return;
+            UpdateShake();
+            if (showCountdown && errorTimer > 0f)
+                SetStatus($"{errorMessage}\n<size=70%>TRY AGAIN IN {errorTimer:0.0}s</size>", errorColor);
+
+            if (errorTimer <= 0f)
+            {
+                ResetShake();
+                Refresh();
+                SetStatus(idleMessage, idleTextColor);
+            }
+            return;   // input ignored during lockout
         }
 
         if (!IsActive || phone == null || !phone.IsReady) return;
@@ -117,6 +147,7 @@ public class ComboInput : MonoBehaviour
             if (progress >= sequence.Count)
             {
                 completed = true;
+                SetStatus(completeMessage, doneColor);
                 if (logEvents) Debug.Log("[Combo] COMPLETE");
                 OnComboComplete?.Invoke();
             }
@@ -126,6 +157,7 @@ public class ComboInput : MonoBehaviour
             progress = 0;
             errorTimer = errorLockout;
             foreach (var icon in icons) icon.color = errorColor;
+            SetStatus(errorMessage, errorColor);
             if (logEvents) Debug.Log("[Combo] WRONG - reset");
             OnComboFailed?.Invoke();
         }
@@ -164,6 +196,28 @@ public class ComboInput : MonoBehaviour
     {
         for (int i = 0; i < icons.Count; i++)
             icons[i].color = i < progress ? doneColor : pendingColor;
+    }
+
+    void SetStatus(string msg, Color c)
+    {
+        if (statusText == null) return;
+        statusText.text = msg;
+        statusText.color = c;
+    }
+
+    void UpdateShake()
+    {
+        if (arrowRow == null) return;
+        float elapsed = errorLockout - errorTimer;
+        if (elapsed > shakeTime) { ResetShake(); return; }
+        float fade = 1f - elapsed / shakeTime;
+        float x = Mathf.Sin(elapsed * 60f) * shakeAmount * fade;
+        arrowRow.anchoredPosition = rowBasePos + new Vector2(x, 0f);
+    }
+
+    void ResetShake()
+    {
+        if (arrowRow != null) arrowRow.anchoredPosition = rowBasePos;
     }
 
     static float Angle(Arrow a) => a switch
