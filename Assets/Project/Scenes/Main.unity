@@ -592,6 +592,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5625958872868466534, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: 6211821824135529559, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -50
+      objectReference: {fileID: 0}
     - target: {fileID: 7766752913780566752, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
       propertyPath: m_LocalPosition.x
       value: -5.6
@@ -610,7 +630,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 7766752913780566752, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 657367099}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
 --- !u!1001 &601917715
@@ -731,6 +754,37 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffffi
+--- !u!1 &657367098
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 657367099}
+  m_Layer: 0
+  m_Name: Head
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &657367099
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657367098}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.2, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1024585588}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &666455097
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1332,6 +1386,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6939165817529342041, guid: e458edfbbf86541009b09e2cdb01a6d9, type: 3}
   m_PrefabInstance: {fileID: 1222827889}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1235400776
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1235400777}
+  m_Layer: 0
+  m_Name: Eye
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1235400777
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1235400776}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.8, z: 0.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1517777460}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1269687444
 GameObject:
   m_ObjectHideFlags: 0
@@ -1682,6 +1767,7 @@ GameObject:
   - component: {fileID: 1517777457}
   - component: {fileID: 1517777461}
   - component: {fileID: 1517777462}
+  - component: {fileID: 1517777463}
   m_Layer: 0
   m_Name: Invigilator
   m_TagString: Untagged
@@ -1781,7 +1867,8 @@ Transform:
   m_LocalPosition: {x: -4.2, y: 0.25, z: 6.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1235400777}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!195 &1517777461
@@ -1823,6 +1910,28 @@ MonoBehaviour:
   sampleTolerance: 2
   walkSpeed: 1.2
   pauseRange: {x: 1, y: 3}
+--- !u!114 &1517777463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1517777456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc33382b3e57544d3810fb9a9a68dd33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VisionCone
+  eye: {fileID: 1235400777}
+  viewAngle: 100
+  viewDistance: 12
+  sightBlockers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  lookAwayAngle: 45
+  headChildName: Head
+  refindInterval: 1
+  showReadout: 1
 --- !u!1001 &1560457547
 PrefabInstance:
   m_ObjectHideFlags: 0
