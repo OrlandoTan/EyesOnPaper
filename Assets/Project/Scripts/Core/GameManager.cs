@@ -13,9 +13,12 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    public enum State { Exam, Caught, TimeUp }
+    public enum State { Exam, Caught, TimeUp, Submitted }
 
     public static GameManager Instance { get; private set; }
+
+    /// <summary>Set by the player half's ResultsScreen so the placeholder end box steps aside. The clock still draws.</summary>
+    public static bool ExternalEndScreen;
 
     [Header("Exam")]
     [Tooltip("Seconds. SCOPE says 5:00.")]
@@ -67,6 +70,14 @@ public class GameManager : MonoBehaviour
             Restart();
     }
 
+    /// <summary>Player handed the paper in early. Stops the clock; being caught afterwards no longer counts.</summary>
+    public void Submit()
+    {
+        if (Current != State.Exam) return;
+        Current = State.Submitted;
+        GameEvents.ExamEnded();
+    }
+
     private void HandleCaught()
     {
         // Caught after the bell doesn't count — you already handed the paper in.
@@ -94,7 +105,7 @@ public class GameManager : MonoBehaviour
         if (!showPlaceholderUI) return;
 
         DrawClock();
-        if (Current != State.Exam) DrawEndScreen();
+        if (Current != State.Exam && !ExternalEndScreen) DrawEndScreen();
     }
 
     private void DrawClock()

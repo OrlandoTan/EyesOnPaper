@@ -30,10 +30,17 @@ public class AnswerSheet : MonoBehaviour
 
     [Header("Reticle")]
     [SerializeField] bool showReticle = true;
+    [SerializeField] Color reticleColor = new Color(0f, 0f, 0f, 0.9f);
+    [SerializeField] bool reticleOutline = true;   // faint light edge so it's still visible on dark surfaces
     [SerializeField] bool logEvents = true;
+
+    [Header("Hand in")]
+    [SerializeField] float handInHoldTime = 1f;  // hold left-click this long on HAND IN
 
     public event Action<int, int> OnMarked;      // (question, choice 0-3, or -1 = erased)
     public int[] Marks { get; private set; }     // -1 = blank
+    public float[] MarkTimes { get; private set; }   // Time.time of the last mark per question
+    public ExamData Exam => exam;
     public int MarkedCount { get { int n = 0; foreach (int m in Marks) if (m >= 0) n++; return n; } }
 
     class Bubble
@@ -46,6 +53,12 @@ public class AnswerSheet : MonoBehaviour
 
     readonly List<Bubble> bubbles = new List<Bubble>();
     Bubble hovered;
+    RectTransform handInBox, handInFill;
+    TMP_Text handInLabel;
+    Image handInBorder;
+    bool handInHovered;
+    float handInProgress;
+    bool handedIn;
     Image reticle;
     bool phoneOut, locked;
     static Sprite ringSprite, discSprite;
@@ -57,6 +70,7 @@ public class AnswerSheet : MonoBehaviour
         if (phone == null) phone = transform.root.GetComponentInChildren<PhoneController>();
 
         Marks = new int[exam.Count];
+        MarkTimes = new float[exam.Count];
         for (int i = 0; i < Marks.Length; i++) Marks[i] = -1;
 
         // "Answered" now means "something is written on the sheet".
@@ -88,13 +102,15 @@ public class AnswerSheet : MonoBehaviour
 
     void PhoneShown()  { phoneOut = true;  if (reticle) reticle.enabled = false; }
     void PhoneHidden() { phoneOut = false; if (reticle) reticle.enabled = true; }
-    void Lock()        { locked = true; SetHover(null); }
+    void Lock()        { locked = true; SetHover(null); SetHandInHover(false); if (reticle) reticle.enabled = false; }
 
     void Update()
     {
-        if (locked || phoneOut || cam == null) { SetHover(null); return; }
+        if (locked || phoneOut || cam == null) { SetHover(null); SetHandInHover(false); return; }
 
         Vector2 centre = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+        UpdateHandIn(centre);
+        if (handInHovered) { SetHover(null); return; }
         Bubble hit = null;
         foreach (var b in bubbles)
         {
@@ -111,7 +127,9 @@ public class AnswerSheet : MonoBehaviour
     public void Toggle(int q, int c)
     {
         Marks[q] = Marks[q] == c ? -1 : c;     // click the same bubble again to erase
+        MarkTimes[q] = Time.time;
         RefreshRow(q);
+        RefreshHandInLabel();
         if (logEvents) Debug.Log(Marks[q] < 0 ? $"[Sheet] Q{q + 1} erased" : $"[Sheet] Q{q + 1} = {ExamData.Letter(c)}");
         OnMarked?.Invoke(q, Marks[q]);
     }
@@ -134,11 +152,87 @@ public class AnswerSheet : MonoBehaviour
         hovered = b;
         if (hovered != null) { hovered.ring.color = hoverInk; hovered.letter.color = hoverInk; }
 
-        if (reticle != null)
-        {
-            reticle.color = hovered != null ? hoverInk : new Color(1f, 1f, 1f, 0.7f);
-            reticle.rectTransform.sizeDelta = Vector2.one * (hovered != null ? 12f : 7f);
-        }
+        UpdateReticle();
+    }
+
+    void UpdateReticle()
+    {
+        if (reticle == null) return;
+        bool any = hovered != null || handInHovered;
+        reticle.color = any ? hoverInk : reticleColor;
+        reticle.rectTransform.sizeDelta = Vector2.one * (any ? 12f : 7f);
+    }
+
+    // ---------- Hand in ----------
+
+    void UpdateHandIn(Vector2 centre)
+    {
+        if (handInBox == null || handedIn) return;
+
+        bool over = RectTransformUtility.RectangleContainsScreenPoint(handInBox, centre, cam);
+        SetHandInHover(over);
+
+        bool held = over && Mouse.current != null && Mouse.current.leftButton.isPressed;
+        handInProgress = held ? handInProgress + Time.deltaTime / Mathf.Max(0.05f, handInHoldTime) : 0f;
+        handInFill.sizeDelta = new Vector2(handInBox.sizeDelta.x * Mathf.Clamp01(handInProgress), handInBox.sizeDelta.y);
+
+        if (handInProgress >= 1f) HandIn();
+    }
+
+    void HandIn()
+    {
+        handedIn = true;
+        if (logEvents) Debug.Log($"[Sheet] HANDED IN with {MarkedCount}/{Marks.Length} marked");
+        if (GameManager.Instance != null) GameManager.Instance.Submit();
+        else GameEvents.ExamEnded();          // no GameManager in this scene (e.g. Test_Player)
+    }
+
+    void SetHandInHover(bool on)
+    {
+        if (handInHovered == on) return;
+        handInHovered = on;
+        if (!on) handInProgress = 0f;
+        if (handInFill != null && !on) handInFill.sizeDelta = new Vector2(0f, handInBox.sizeDelta.y);
+        if (handInBorder != null) handInBorder.color = on ? hoverInk : ink;
+        if (handInLabel != null) handInLabel.color = on ? hoverInk : ink;
+        UpdateReticle();
+    }
+
+    void RefreshHandInLabel()
+    {
+        if (handInLabel != null)
+            handInLabel.text = $"HAND IN  <size=70%>({MarkedCount}/{Marks.Length} marked, hold click)</size>";
+    }
+
+    void BuildHandIn(RectTransform root, float y)
+    {
+        var size = new Vector2(1500f, 150f);
+
+        var borderGo = new GameObject("HandIn", typeof(RectTransform), typeof(Image));
+        handInBox = (RectTransform)borderGo.transform;
+        handInBox.SetParent(root, false);
+        handInBox.sizeDelta = size;
+        handInBox.anchoredPosition = new Vector2(0f, y);
+        handInBorder = borderGo.GetComponent<Image>();
+        handInBorder.color = ink;
+
+        var innerGo = new GameObject("Inner", typeof(RectTransform), typeof(Image));
+        var inner = (RectTransform)innerGo.transform;
+        inner.SetParent(handInBox, false);
+        inner.sizeDelta = size - Vector2.one * 16f;
+        innerGo.GetComponent<Image>().color = Color.white;
+
+        var fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+        handInFill = (RectTransform)fillGo.transform;
+        handInFill.SetParent(handInBox, false);
+        handInFill.anchorMin = handInFill.anchorMax = new Vector2(0f, 0.5f);
+        handInFill.pivot = new Vector2(0f, 0.5f);
+        handInFill.anchoredPosition = Vector2.zero;
+        handInFill.sizeDelta = new Vector2(0f, size.y);
+        fillGo.GetComponent<Image>().color = new Color(hoverInk.r, hoverInk.g, hoverInk.b, 0.35f);
+
+        handInLabel = MakeText(handInBox, "", Vector2.zero, size, 64f, FontStyles.Bold);
+        RefreshHandInLabel();
     }
 
     // ---------- Building ----------
@@ -178,6 +272,9 @@ public class AnswerSheet : MonoBehaviour
                 bubbles.Add(MakeBubble(root, q, c, new Vector2(x, y)));
             }
         }
+
+        float lastRowY = firstRowY - (exam.Count - 1) * rowGap;
+        BuildHandIn(root, lastRowY - bubbleSize * 0.5f - 160f);
     }
 
     Bubble MakeBubble(RectTransform parent, int q, int c, Vector2 pos)
@@ -239,8 +336,14 @@ public class AnswerSheet : MonoBehaviour
         rt.sizeDelta = Vector2.one * 7f;
         reticle = dot.GetComponent<Image>();
         reticle.sprite = discSprite;
-        reticle.color = new Color(1f, 1f, 1f, 0.7f);
+        reticle.color = reticleColor;
         reticle.raycastTarget = false;
+        if (reticleOutline)
+        {
+            var outline = dot.AddComponent<Outline>();
+            outline.effectColor = new Color(1f, 1f, 1f, 0.45f);
+            outline.effectDistance = new Vector2(1f, -1f);
+        }
     }
 
     // Anti-aliased circle / ring sprite, generated so there's no image to import.
