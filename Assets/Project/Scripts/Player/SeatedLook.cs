@@ -11,14 +11,23 @@ public class SeatedLook : MonoBehaviour
     [SerializeField] float startPitch = 20f;
 
     [Header("Phone look")]
-    [SerializeField] float phonePitch = 80f;    // looking down into your lap
+    [SerializeField] Transform phoneFocus;      // drag PhoneFocus here
+    [SerializeField] float phoneFOV = 22f;      // zoomed-in field of view
     [SerializeField] float transitionTime = 0.25f;
 
+    Camera cam;
+    float freeFOV;
     float yaw, pitch;
     float blend;          // 0 = free look, 1 = locked on phone
     bool phoneMode;
 
     public bool IsLookingAtPhone => blend >= 0.99f;
+
+    void Awake()
+    {
+        cam = GetComponentInChildren<Camera>();
+        freeFOV = cam.fieldOfView;
+    }
 
     void OnEnable()
     {
@@ -42,7 +51,6 @@ public class SeatedLook : MonoBehaviour
 
     void Update()
     {
-        // Mouse-look only when not on the phone
         if (!phoneMode && Mouse.current != null)
         {
             Vector2 d = Mouse.current.delta.ReadValue() * sensitivity;
@@ -54,7 +62,18 @@ public class SeatedLook : MonoBehaviour
         float eased = Mathf.SmoothStep(0f, 1f, blend);
 
         Quaternion freeLook = Quaternion.Euler(pitch, yaw, 0f);
-        Quaternion phoneLook = Quaternion.Euler(phonePitch, 0f, 0f);
+        Quaternion phoneLook = PhoneLookRotation();
+
         transform.localRotation = Quaternion.Slerp(freeLook, phoneLook, eased);
+        cam.fieldOfView = Mathf.Lerp(freeFOV, phoneFOV, eased);
+    }
+
+    // Rotation (local to PlayerRig) that points Head straight at the phone
+    Quaternion PhoneLookRotation()
+    {
+        if (phoneFocus == null) return Quaternion.Euler(80f, 0f, 0f);
+        Vector3 worldDir = phoneFocus.position - transform.position;
+        Vector3 localDir = transform.parent.InverseTransformDirection(worldDir);
+        return Quaternion.LookRotation(localDir, Vector3.up);
     }
 }
