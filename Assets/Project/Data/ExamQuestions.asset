@@ -85,7 +85,7 @@ MonoBehaviour:
     - Up to 7
     - 0
     correctIndex: 2
-    difficulty: 2
+    difficulty: 3
   - text: What is the invigilator thinking about right now?
     options:
     - Lunch
@@ -93,7 +93,8 @@ MonoBehaviour:
     - Retirement
     - The heat death of the universe
     correctIndex: 1
-    difficulty: 2
+    difficulty: 3
   easyLength: 4
   mediumLength: 6
   hardLength: 8
+  extremeLength: 10

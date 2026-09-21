@@ -17,6 +17,11 @@ public class ComboInput : MonoBehaviour
     [SerializeField] Image arrowTemplate;         // ArrowRow/ArrowTemplate (disabled at runtime)
     [SerializeField] TMP_Text statusText;         // PhoneCanvas/StatusText
 
+    [Header("Layout (used when ArrowRow has NO layout group component)")]
+    [SerializeField] int maxPerRow = 5;
+    [SerializeField] float arrowSpacing = 8f;
+    [SerializeField] float rowSpacing = 12f;
+
     [Header("Colours")]
     [SerializeField] Color pendingColor = new Color(1f, 1f, 1f, 0.35f);
     [SerializeField] Color doneColor    = new Color(1f, 0.85f, 0.2f, 1f);
@@ -35,7 +40,7 @@ public class ComboInput : MonoBehaviour
     [SerializeField] float shakeTime   = 0.3f;
 
     [Header("Testing (turn autoStart off once MessageQueue drives this)")]
-    [SerializeField] bool autoStartOnShow = true;
+    [SerializeField] bool autoStartOnShow = false;
     [SerializeField] int testLength = 6;
     [SerializeField] bool newSequenceOnHide = true;
     [SerializeField] bool logEvents = true;
@@ -44,6 +49,27 @@ public class ComboInput : MonoBehaviour
     public event Action OnComboFailed;
 
     public bool IsActive => sequence.Count > 0 && !completed;
+
+    // When false this combo ignores the keyboard (e.g. your own combo while Jack's message is open).
+    public bool AcceptInput { get; set; } = true;
+
+    // Only one combo may read the arrow keys at a time. When a combo takes input
+    // (Jack's message), every other combo ignores the keyboard until it's released.
+    static ComboInput inputOwner;
+    static float inputBlockedUntil;          // brief grace after a hand-back, so in-flight keys don't leak
+    const float ReleaseGrace = 0.3f;
+
+    public void TakeInput() => inputOwner = this;
+
+    public void ReleaseInput()
+    {
+        if (inputOwner != this) return;
+        inputOwner = null;
+        inputBlockedUntil = Time.unscaledTime + ReleaseGrace;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetOwner() { inputOwner = null; inputBlockedUntil = 0f; }
     public bool IsComplete => completed;
 
     readonly List<Arrow> sequence = new List<Arrow>();
@@ -55,7 +81,7 @@ public class ComboInput : MonoBehaviour
 
     void Awake()
     {
-        if (phone == null) phone = GetComponent<PhoneController>();
+        if (phone == null) phone = GetComponentInParent<PhoneController>();
         if (arrowTemplate != null) arrowTemplate.gameObject.SetActive(false);
         if (arrowRow != null) rowBasePos = arrowRow.anchoredPosition;
         SetStatus("", idleTextColor);
@@ -69,6 +95,7 @@ public class ComboInput : MonoBehaviour
 
     void OnDisable()
     {
+        ReleaseInput();
         GameEvents.OnPhoneShown  -= HandleShown;
         GameEvents.OnPhoneHidden -= HandleHidden;
     }
@@ -98,6 +125,10 @@ public class ComboInput : MonoBehaviour
         Rebuild();
         SetStatus("", idleTextColor);
     }
+
+    // Show a message in this combo's status line (e.g. "COMPLETE").
+    public void ShowMessage(string msg, bool success = true) =>
+        SetStatus(msg, success ? doneColor : errorColor);
 
     // ---------- Phone events ----------
 
@@ -135,7 +166,9 @@ public class ComboInput : MonoBehaviour
             return;   // input ignored during lockout
         }
 
-        if (!IsActive || phone == null || !phone.IsReady) return;
+        if (inputOwner != null && inputOwner != this) return;   // another combo has the keyboard
+        if (inputOwner == null && Time.unscaledTime < inputBlockedUntil) return;   // just handed back
+        if (!AcceptInput || !IsActive || phone == null || !phone.IsReady) return;
 
         Arrow? pressed = ReadArrow();
         if (pressed == null) return;
@@ -189,7 +222,37 @@ public class ComboInput : MonoBehaviour
             img.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Angle(a));
             icons.Add(img);
         }
+
+        // No layout group on ArrowRow -> place arrows ourselves, every row centred.
+        if (arrowRow.GetComponent<LayoutGroup>() == null) LayoutCentredRows();
         Refresh();
+    }
+
+    void LayoutCentredRows()
+    {
+        int n = icons.Count;
+        if (n == 0) return;
+
+        int perRow = Mathf.Max(1, maxPerRow);
+        int rows = (n + perRow - 1) / perRow;
+        Vector2 size = arrowTemplate.rectTransform.sizeDelta;
+        float stepX = size.x + arrowSpacing;
+        float stepY = size.y + rowSpacing;
+
+        for (int i = 0; i < n; i++)
+        {
+            int r = i / perRow;
+            int c = i % perRow;
+            int inThisRow = Mathf.Min(perRow, n - r * perRow);
+
+            float x = (c - (inThisRow - 1) * 0.5f) * stepX;
+            float y = ((rows - 1) * 0.5f - r) * stepY;
+
+            RectTransform rt = icons[i].rectTransform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = size;
+            rt.anchoredPosition = new Vector2(x, y);
+        }
     }
 
     void Refresh()

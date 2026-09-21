@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Difficulty { Easy, Medium, Hard }
+public enum Difficulty { Easy, Medium, Hard, Extreme }
 
 [Serializable]
 public class Question
@@ -25,6 +25,7 @@ public class ExamData : ScriptableObject
     public int easyLength = 4;
     public int mediumLength = 6;
     public int hardLength = 8;
+    public int extremeLength = 10;
 
     public int Count => questions.Count;
 
@@ -33,6 +34,7 @@ public class ExamData : ScriptableObject
         Difficulty.Easy   => easyLength,
         Difficulty.Medium => mediumLength,
         Difficulty.Hard   => hardLength,
+        Difficulty.Extreme => extremeLength,
         _ => mediumLength
     };
 
@@ -60,9 +62,9 @@ public class ExamData : ScriptableObject
               new[] { "About 204 kg", "About 450 kg", "About 992 kg", "Ask the pilot" }, 0),
             Q(Difficulty.Hard, "In Reason's error taxonomy, forgetting a step in a checklist is a:",
               new[] { "Slip", "Lapse", "Mistake", "Violation" }, 1),
-            Q(Difficulty.Hard, "A bubble sheet shifted down one row after Q3 can cause how many wrong answers out of 10?",
+            Q(Difficulty.Extreme, "A bubble sheet shifted down one row after Q3 can cause how many wrong answers out of 10?",
               new[] { "1", "3", "Up to 7", "0" }, 2),
-            Q(Difficulty.Hard, "What is the invigilator thinking about right now?",
+            Q(Difficulty.Extreme, "What is the invigilator thinking about right now?",
               new[] { "Lunch", "You", "Retirement", "The heat death of the universe" }, 1),
         };
 #if UNITY_EDITOR
