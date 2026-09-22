@@ -83,78 +83,28 @@ public class ResultsScreen : MonoBehaviour
         }
     }
 
+    // Victorian university grading (Monash, RMIT, Deakin, La Trobe, Swinburne)
     static string Grade(float pct) =>
-        pct >= 0.9f ? "A" : pct >= 0.75f ? "B" : pct >= 0.6f ? "C" : pct >= 0.5f ? "D" : "F";
+        pct >= 0.8f ? "HD" : pct >= 0.7f ? "D" : pct >= 0.6f ? "C" : pct >= 0.5f ? "P" : "N";
 
-    // Did the player write another question's answer here? Looks at the most recent
-    // reveal before they marked q (a whole Jack bundle counts as one reveal).
-    CheatLog.Entry SwappedWith(int q, int written)
+    static string GradeName(string g) => g switch
     {
-        float markTime = sheet.MarkTimes[q];
-        float latest = float.NegativeInfinity;
-        foreach (var e in CheatLog.Entries)
-            if (e.time <= markTime && e.time > latest) latest = e.time;
-        if (float.IsNegativeInfinity(latest)) return null;
+        "HD" => "High Distinction",
+        "D"  => "Distinction",
+        "C"  => "Credit",
+        "P"  => "Pass",
+        _    => "Fail",
+    };
 
-        foreach (var e in CheatLog.Entries)
-            if (Mathf.Abs(e.time - latest) < 0.01f && e.question != q && e.answer == written) return e;
-        return null;
-    }
-
-    CheatLog.Entry RevealFor(int q)
-    {
-        CheatLog.Entry found = null;
-        foreach (var e in CheatLog.Entries) if (e.question == q) found = e;
-        return found;
-    }
-
-    bool WasMissed(int q)
-    {
-        foreach (var m in CheatLog.MissedMessages) if (m.questions.Contains(q)) return true;
-        return false;
-    }
-
-    static string Src(CheatSource s) => s == CheatSource.Jack ? "Jack" : "Your notes";
-
-    // One line per question: what you wrote, right/wrong, and the human error behind it.
+    // One line per question: what you wrote, and whether it was right.
     string Row(int q, out bool correct)
     {
         int written = sheet.Marks[q];
-        int answer = exam.questions[q].correctIndex;
-        var reveal = RevealFor(q);
-        correct = written == answer;
+        correct = written == exam.questions[q].correctIndex;
 
-        string num = $"<b>Q{q + 1}</b>";
         string wrote = written < 0 ? "-" : ExamData.Letter(written);
         string verdict = correct ? $"<color={Green}>RIGHT</color>" : $"<color={Red}>WRONG</color>";
-        string reason;
-
-        if (written < 0)
-        {
-            reason = reveal != null
-                ? $"Left blank. {Src(reveal.source)} told you it was {ExamData.Letter(reveal.answer)}."
-                : WasMissed(q) ? "Left blank. Jack sent it - you missed the message." : "Left blank.";
-        }
-        else if (correct)
-        {
-            reason = reveal != null ? $"<color={Grey}>({(reveal.source == CheatSource.Jack ? "Jack" : "Notes")})</color>"
-                                    : "Lucky guess.";
-        }
-        else
-        {
-            var last = SwappedWith(q, written);
-
-            if (last != null)
-                reason = $"Mixed up: {ExamData.Letter(written)} was {(last.source == CheatSource.Jack ? "Jack's" : "your")} answer for Q{last.question + 1}.";
-            else if (reveal != null)
-                reason = $"{Src(reveal.source)} said {ExamData.Letter(reveal.answer)}. You wrote {wrote}.";
-            else if (WasMissed(q))
-                reason = "Guessed. Jack sent it - you missed the message.";
-            else
-                reason = "Guessed.";
-        }
-
-        return $"{num}<pos=9%>{wrote}<pos=16%>{verdict}<pos=31%><size=85%>{reason}</size>";
+        return $"<b>Q{q + 1}</b><pos=30%>{wrote}<pos=55%>{verdict}";
     }
 
     // ---------- Display ----------
@@ -201,7 +151,7 @@ public class ResultsScreen : MonoBehaviour
         bool win = !caught && pct >= passMark;
         int bonus = ending == Ending.HandedIn ? Mathf.FloorToInt(timeLeft) * pointsPerSecondLeft : 0;
         int score = caught ? 0 : correctCount * pointsPerCorrect + bonus;
-        string grade = caught ? "F" : Grade(pct);
+        string grade = caught ? "N" : Grade(pct);
 
         var sb = new StringBuilder();
         sb.Append($"<size=120%>You cheated on <b>{cheated.Count}/{exam.Count}</b> questions. ");
@@ -211,7 +161,8 @@ public class ResultsScreen : MonoBehaviour
         sb.Append($"Jack messages missed: {CheatLog.MissedMessages.Count}");
         if (bonus > 0) sb.Append($"   ·   Early hand-in bonus +{bonus}");
         sb.Append("</color>\n\n");
-        sb.Append($"<size=160%><b>GRADE {grade}   ·   SCORE {score}</b></size>\n");
+        string gradeDetail = caught ? "Fail - misconduct" : $"{GradeName(grade)}, {Mathf.RoundToInt(pct * 100f)}%";
+        sb.Append($"<size=160%><b>{grade}  <size=60%>({gradeDetail})</size>   ·   SCORE {score}</b></size>\n");
         sb.Append(win ? $"<size=130%><color={Green}><b>PASSED</b></color></size>" : $"<size=130%><color={Red}><b>FAILED</b></color></size>");
         sb.Append($"\n\n<size=80%><color={Grey}>Press R to retake the exam</color></size>");
         summaryText.text = sb.ToString();
@@ -238,7 +189,7 @@ public class ResultsScreen : MonoBehaviour
         paper.sizeDelta = new Vector2(1250f, 1000f);
 
         headerText  = MakeText(paper, new Vector2(0f, 400f),  new Vector2(1150f, 160f), 64f, TextAlignmentOptions.Center);
-        rowsText    = MakeText(paper, new Vector2(0f, 60f),   new Vector2(1100f, 520f), 30f, TextAlignmentOptions.TopLeft);
+        rowsText    = MakeText(paper, new Vector2(0f, 60f),   new Vector2(460f, 520f), 32f, TextAlignmentOptions.TopLeft);
         summaryText = MakeText(paper, new Vector2(0f, -360f), new Vector2(1150f, 260f), 26f, TextAlignmentOptions.Center);
         rowsText.lineSpacing = 12f;
     }
