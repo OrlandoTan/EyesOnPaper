@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum CheatSource { Self, Jack }
+public enum CheatSource { Self, Jack, Paper }
 
 // Shared record of every answer the player has seen, and every Jack message they missed.
 // The results screen compares this against what was written on the answer sheet.

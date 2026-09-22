@@ -41,6 +41,14 @@ public class AnswerSheet : MonoBehaviour
     public int[] Marks { get; private set; }     // -1 = blank
     public float[] MarkTimes { get; private set; }   // Time.time of the last mark per question
     public ExamData Exam => exam;
+    public int HoveredRow => hovered != null ? hovered.q : -1;     // -1 = not aiming at a row
+    public bool IsLocked => locked;
+
+    // Pencil note in the margin next to a row (the off-phone cheat writes here).
+    public void SetNote(int q, string text)
+    {
+        if (notes != null && q >= 0 && q < notes.Length && notes[q] != null) notes[q].text = text;
+    }
     public int MarkedCount { get { int n = 0; foreach (int m in Marks) if (m >= 0) n++; return n; } }
 
     class Bubble
@@ -53,6 +61,7 @@ public class AnswerSheet : MonoBehaviour
 
     readonly List<Bubble> bubbles = new List<Bubble>();
     Bubble hovered;
+    TMP_Text[] notes;
     RectTransform handInBox, handInFill;
     TMP_Text handInLabel;
     Image handInBorder;
@@ -261,6 +270,7 @@ public class AnswerSheet : MonoBehaviour
         float firstRowY = nameY - nameHeight * 0.5f - headerGap - bubbleSize * 0.5f;
 
         float xOffset = 150f;     // leave room on the left for question numbers
+        notes = new TMP_Text[exam.Count];
         for (int q = 0; q < exam.Count; q++)
         {
             float y = firstRowY - q * rowGap;
@@ -271,6 +281,11 @@ public class AnswerSheet : MonoBehaviour
                 float x = (c - 1.5f) * columnGap + xOffset;
                 bubbles.Add(MakeBubble(root, q, c, new Vector2(x, y)));
             }
+
+            // Margin note (pencil), right of the D bubble
+            var note = MakeText(root, "", new Vector2(2.5f * columnGap + xOffset + 30f, y), new Vector2(260f, bubbleSize), 80f, FontStyles.Italic);
+            note.color = new Color(pencil.r, pencil.g, pencil.b, 0.75f);
+            notes[q] = note;
         }
 
         float lastRowY = firstRowY - (exam.Count - 1) * rowGap;
