@@ -30,10 +30,23 @@ public class InvigilatorFootsteps : MonoBehaviour
     [SerializeField] private float minDistance = 1.5f;
     [Tooltip("Silent beyond this. Should comfortably cover the room.")]
     [SerializeField] private float maxDistance = 22f;
+    [Tooltip("How sharply volume drops with distance. 1 is linear; higher makes closeness count for much more.")]
+    [Range(1f, 5f)]
+    [SerializeField] private float falloffSharpness = 2.5f;
+
+    [Header("Muffling")]
+    [Tooltip("Distant steps lose their high end, the way they do through air and furniture.")]
+    [SerializeField] private bool muffleWithDistance = true;
+    [Tooltip("Cutoff in Hz right next to you — effectively no filtering.")]
+    [SerializeField] private float nearCutoff = 22000f;
+    [Tooltip("Cutoff in Hz at maximum range. Low values sound far away.")]
+    [SerializeField] private float farCutoff = 750f;
 
     private NavMeshAgent agent;
     private AudioSource source;
     private AudioClip generated;
+    private AudioLowPassFilter lowPass;
+    private Transform listener;
     private float distanceSinceStep;
 
     private void Awake()
@@ -46,10 +59,25 @@ public class InvigilatorFootsteps : MonoBehaviour
         source.playOnAwake = false;
         source.loop = false;
         source.spatialBlend = 1f;
-        source.rolloffMode = AudioRolloffMode.Linear;
         source.minDistance = minDistance;
         source.maxDistance = maxDistance;
         source.dopplerLevel = 0f;
+
+        // Linear rolloff keeps a walker at the far wall over half as loud as one
+        // at your shoulder, which tells the player almost nothing. A curved
+        // falloff makes the last few metres count for what they should.
+        source.rolloffMode = AudioRolloffMode.Custom;
+        source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, BuildFalloffCurve());
+
+        if (muffleWithDistance)
+        {
+            lowPass = GetComponent<AudioLowPassFilter>();
+            if (lowPass == null) lowPass = gameObject.AddComponent<AudioLowPassFilter>();
+            lowPass.cutoffFrequency = nearCutoff;
+        }
+
+        AudioListener found = FindAnyObjectByType<AudioListener>();
+        if (found != null) listener = found.transform;
 
         if (steps == null || steps.Length == 0)
             generated = BuildPlaceholderStep();
@@ -84,6 +112,36 @@ public class InvigilatorFootsteps : MonoBehaviour
         PlayStep();
     }
 
+    /// <summary>
+    /// Steps from across the room arrive muffled; steps at your shoulder are
+    /// sharp. Cheaper than reverb and it reads instantly.
+    /// </summary>
+    private void UpdateMuffle()
+    {
+        if (lowPass == null || listener == null) return;
+
+        float distance = Vector3.Distance(transform.position, listener.position);
+        float t = Mathf.Clamp01(Mathf.InverseLerp(minDistance, maxDistance, distance));
+        lowPass.cutoffFrequency = Mathf.Lerp(nearCutoff, farCutoff, t);
+    }
+
+    /// <summary>Normalised over 0..maxDistance. (1 - t) raised to the sharpness.</summary>
+    private AnimationCurve BuildFalloffCurve()
+    {
+        const int points = 17;
+        var keys = new Keyframe[points];
+
+        for (int i = 0; i < points; i++)
+        {
+            float t = i / (float)(points - 1);
+            keys[i] = new Keyframe(t, Mathf.Pow(1f - t, falloffSharpness));
+        }
+
+        var curve = new AnimationCurve(keys);
+        for (int i = 0; i < points; i++) curve.SmoothTangents(i, 0f);
+        return curve;
+    }
+
     private void PlayStep()
     {
         AudioClip clip = steps != null && steps.Length > 0
@@ -92,6 +150,7 @@ public class InvigilatorFootsteps : MonoBehaviour
 
         if (clip == null) return;
 
+        UpdateMuffle();
         source.pitch = Random.Range(pitchRange.x, pitchRange.y);
         source.PlayOneShot(clip, volume);
     }

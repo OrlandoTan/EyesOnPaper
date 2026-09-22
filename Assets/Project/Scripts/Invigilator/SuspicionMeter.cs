@@ -51,7 +51,13 @@ public class SuspicionMeter : MonoBehaviour
     [Tooltip("Decay while locked on. Much slower than normal — being seen has to cost something.")]
     [SerializeField] private float lockedDecay = 1f;
 
-    [Header("Buzz spike (flat %)")]
+    [Header("Buzz")]
+    [Tooltip("Off by default. Jack's timing isn't the player's choice, so punishing it " +
+             "is a dice roll — and SCOPE's first pillar says errors must trace back to " +
+             "something the player did.")]
+    [SerializeField] private bool buzzAlertsInvigilator = false;
+
+    [Header("Buzz spike (flat %), only when the above is on")]
     [SerializeField] private float buzzSpikeNear = 25f;
     [SerializeField] private float buzzSpikeFar = 4f;
     [Tooltip("Inside this distance the buzz is clearly audible.")]
@@ -198,6 +204,8 @@ public class SuspicionMeter : MonoBehaviour
 
     private void HandleBuzz()
     {
+        if (!buzzAlertsInvigilator) return;
+
         if (vision == null) { Add(buzzSpikeFar); return; }
         Add(vision.DistanceToPlayer <= buzzHearRadius ? buzzSpikeNear : buzzSpikeFar);
     }
