@@ -20,7 +20,8 @@ public class JackMessenger : MonoBehaviour
     [SerializeField] CanvasGroup panel;          // auto-filled: CanvasGroup on this object
     [SerializeField] TMP_Text headerText;        // JackPanel/JackHeader
     [SerializeField] TMP_Text revealText;        // JackPanel/JackReveal
-    [SerializeField] AudioSource buzzAudio;      // optional vibration sound
+    [SerializeField] AudioSource buzzAudio;      // optional: leave empty for a generated vibration sound
+    [SerializeField, Range(0f, 1f)] float buzzVolume = 0.7f;
     [SerializeField] PhoneController phone;      // auto-filled from parents
 
     [Header("Input")]
@@ -58,6 +59,40 @@ public class JackMessenger : MonoBehaviour
         if (jackCombo == null) jackCombo = GetComponent<ComboInput>();
         if (panel == null) panel = GetComponent<CanvasGroup>();
         if (selfCheat == null) selfCheat = GetComponentInParent<SelfCheat>();
+
+        // No sound assigned: make a placeholder phone vibration so the buzz is never silent.
+        // The buzz raises suspicion, so the player must always hear it.
+        if (buzzAudio == null)
+        {
+            buzzAudio = gameObject.AddComponent<AudioSource>();
+            buzzAudio.playOnAwake = false;
+            buzzAudio.spatialBlend = 0f;
+            buzzAudio.clip = BuildVibration();
+        }
+        buzzAudio.volume = buzzVolume;
+    }
+
+    static AudioClip BuildVibration()
+    {
+        const int rate = 44100;
+        const float pulse = 0.22f, gap = 0.12f;
+        int total = Mathf.CeilToInt(rate * (pulse * 2f + gap));
+        var data = new float[total];
+        var rng = new System.Random(7);
+        for (int i = 0; i < total; i++)
+        {
+            float t = i / (float)rate;
+            bool on = t < pulse || (t > pulse + gap && t < pulse * 2f + gap);
+            if (!on) continue;
+            float local = t < pulse ? t : t - pulse - gap;
+            float env = Mathf.Clamp01(local / 0.01f) * Mathf.Clamp01((pulse - local) / 0.02f);
+            float motor = Mathf.Sin(2f * Mathf.PI * 165f * t) * 0.6f + Mathf.Sin(2f * Mathf.PI * 330f * t) * 0.2f;
+            float rattle = ((float)rng.NextDouble() * 2f - 1f) * 0.15f;
+            data[i] = (motor + rattle) * env * 0.8f;
+        }
+        var clip = AudioClip.Create("PhoneBuzz", total, 1, rate, false);
+        clip.SetData(data, 0);
+        return clip;
     }
 
     void OnEnable()

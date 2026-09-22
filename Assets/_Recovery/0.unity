@@ -4072,6 +4072,15 @@ MonoBehaviour:
   mediumLookAtPlayerChance: 0.75
   highLookAtPlayerChance: 1
   highPauseRange: {x: 3, y: 6}
+  everyStopIsLookAround: 1
+  lowScanLength: {x: 2, y: 3}
+  mediumScanLength: {x: 2.5, y: 4}
+  highScanLength: {x: 3, y: 5}
+  highSweepScale: 0.4
+  midWalkStops: 1
+  lowMidStopEvery: {x: 8, y: 14}
+  mediumMidStopEvery: {x: 6, y: 10}
+  highMidStopEvery: {x: 4, y: 7}
   turnSpeed: 220
   movingThreshold: 0.15
 --- !u!114 &1517777463
