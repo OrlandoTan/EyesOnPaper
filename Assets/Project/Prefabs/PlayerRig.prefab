@@ -1472,6 +1472,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5377110749117558603}
   - component: {fileID: 3790434128439414638}
+  - component: {fileID: 453543278667842700}
   m_Layer: 0
   m_Name: AnswerSheet
   m_TagString: Untagged
@@ -1523,6 +1524,23 @@ MonoBehaviour:
   reticleOutline: 1
   logEvents: 1
   handInHoldTime: 1
+--- !u!114 &453543278667842700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4280404322255349812}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c327e62037e4202b902dd496e37456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PaperCheat
+  sheet: {fileID: 0}
+  notes: {fileID: 0}
+  phone: {fileID: 0}
+  typingMark: "\xB7"
+  logEvents: 1
 --- !u!1 &4706263696384219650
 GameObject:
   m_ObjectHideFlags: 0
@@ -2074,6 +2092,7 @@ MonoBehaviour:
   phone: {fileID: 0}
   titleText: {fileID: 7788095701134288055}
   answerText: {fileID: 7840952195988144630}
+  revealTime: 1
   autoAdvance: 0
   answerHoldTime: 1.5
   appName: NOTES

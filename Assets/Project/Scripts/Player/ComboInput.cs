@@ -46,6 +46,13 @@ public class ComboInput : MonoBehaviour
     [SerializeField] bool logEvents = true;
 
     public event Action OnComboComplete;
+    public event Action OnSequenceRevealed;        // every arrow of the current pattern is now visible
+
+    // Seconds to reveal the whole pattern, arrow by arrow, while you're looking at the phone.
+    // 0 = instant (Jack's messages). Set by SelfCheat for the Notes combo.
+    public float RevealTime { get; set; } = 0f;
+    public IReadOnlyList<Arrow> Sequence => sequence;
+    public bool FullyRevealed => revealed >= sequence.Count;
     public event Action OnComboFailed;
 
     public bool IsActive => sequence.Count > 0 && !completed;
@@ -77,6 +84,8 @@ public class ComboInput : MonoBehaviour
     int progress;
     bool completed;
     float errorTimer;
+    int revealed;
+    float revealClock;
     Vector2 rowBasePos;
 
     void Awake()
@@ -150,6 +159,8 @@ public class ComboInput : MonoBehaviour
 
     void Update()
     {
+        UpdateReveal();
+
         if (errorTimer > 0f)
         {
             errorTimer -= Time.deltaTime;
@@ -169,6 +180,7 @@ public class ComboInput : MonoBehaviour
         if (inputOwner != null && inputOwner != this) return;   // another combo has the keyboard
         if (inputOwner == null && Time.unscaledTime < inputBlockedUntil) return;   // just handed back
         if (!AcceptInput || !IsActive || phone == null || !phone.IsReady) return;
+        if (!FullyRevealed) return;                              // can't enter what you can't see yet
 
         Arrow? pressed = ReadArrow();
         if (pressed == null) return;
@@ -223,6 +235,11 @@ public class ComboInput : MonoBehaviour
             icons.Add(img);
         }
 
+        revealClock = 0f;
+        revealed = RevealTime > 0f ? 0 : sequence.Count;
+        for (int i = 0; i < icons.Count; i++) icons[i].enabled = i < revealed;
+        if (revealed > 0 && revealed >= sequence.Count) OnSequenceRevealed?.Invoke();
+
         // No layout group on ArrowRow -> place arrows ourselves, every row centred.
         if (arrowRow.GetComponent<LayoutGroup>() == null) LayoutCentredRows();
         Refresh();
@@ -253,6 +270,21 @@ public class ComboInput : MonoBehaviour
             rt.sizeDelta = size;
             rt.anchoredPosition = new Vector2(x, y);
         }
+    }
+
+    // Arrows appear one by one, and only while you're actually looking at the phone.
+    void UpdateReveal()
+    {
+        if (revealed >= sequence.Count || phone == null || !phone.IsReady) return;
+
+        revealClock += Time.deltaTime;
+        float perArrow = RevealTime / Mathf.Max(1, sequence.Count);
+        int target = Mathf.Min(sequence.Count, Mathf.FloorToInt(revealClock / Mathf.Max(0.0001f, perArrow)) + 1);
+        if (target == revealed) return;
+
+        revealed = target;
+        for (int i = 0; i < icons.Count; i++) icons[i].enabled = i < revealed;
+        if (revealed >= sequence.Count) OnSequenceRevealed?.Invoke();
     }
 
     void Refresh()

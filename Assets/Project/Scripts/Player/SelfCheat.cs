@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
@@ -15,6 +16,8 @@ public class SelfCheat : MonoBehaviour
     [SerializeField] TMP_Text answerText;        // PhoneCanvas/RevealText  ("Q3: C")
 
     [Header("Flow")]
+    [Tooltip("Seconds for the pattern to appear, arrow by arrow. Glancing always costs exposure.")]
+    [SerializeField] float revealTime = 1f;
     [SerializeField] bool autoAdvance = false;        // false: answer stays until you hide the phone
     [SerializeField] float answerHoldTime = 1.5f;     // only used when autoAdvance is on
     [SerializeField] string appName = "NOTES";
@@ -27,10 +30,15 @@ public class SelfCheat : MonoBehaviour
 
     public int CurrentTarget => target;
 
+    // The last pattern you fully SAW for each question. The paper accepts only this one.
+    readonly Dictionary<int, Arrow[]> lastSeen = new Dictionary<int, Arrow[]>();
+    public bool TryGetLastSeen(int question, out Arrow[] pattern) => lastSeen.TryGetValue(question, out pattern);
+
     void Awake()
     {
         if (phone == null) phone = GetComponentInParent<PhoneController>();
         if (combo == null) combo = GetComponent<ComboInput>();
+        if (combo != null) combo.RevealTime = revealTime;
     }
 
     void OnEnable()
@@ -38,6 +46,16 @@ public class SelfCheat : MonoBehaviour
         GameEvents.OnPhoneShown  += HandleShown;
         GameEvents.OnPhoneHidden += HandleHidden;
         if (combo != null) combo.OnComboComplete += HandleComplete;
+        if (combo != null) combo.OnSequenceRevealed += RememberPattern;
+    }
+
+    void RememberPattern()
+    {
+        if (target < 0 || combo.Sequence.Count == 0) return;
+        var copy = new Arrow[combo.Sequence.Count];
+        for (int i = 0; i < copy.Length; i++) copy[i] = combo.Sequence[i];
+        lastSeen[target] = copy;
+        if (logEvents) Debug.Log($"[SelfCheat] Saw Q{target + 1} pattern: {string.Join(" ", copy)}");
     }
 
     void OnDisable()
@@ -45,6 +63,7 @@ public class SelfCheat : MonoBehaviour
         GameEvents.OnPhoneShown  -= HandleShown;
         GameEvents.OnPhoneHidden -= HandleHidden;
         if (combo != null) combo.OnComboComplete -= HandleComplete;
+        if (combo != null) combo.OnSequenceRevealed -= RememberPattern;
     }
 
     void Start()
