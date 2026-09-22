@@ -40,7 +40,7 @@ public class InvigilatorController : MonoBehaviour
     [SerializeField] private Vector2 scanPause = new Vector2(3f, 5f);
     [SerializeField] private float scanSweep = 70f;
     [SerializeField] private float scanSpeed = 40f;
-    [Tooltip("Chance a stop faces the player's desk rather than the middle of the room.")]
+    [Tooltip("LOW suspicion: chance a stop faces a random seat (any student, you included, equal odds) rather than the middle of the room.")]
     [Range(0f, 1f)]
     [SerializeField] private float lookAtPlayerChance = 0.4f;
 
@@ -284,11 +284,26 @@ public class InvigilatorController : MonoBehaviour
 
     private Vector3 ChooseLookTarget()
     {
-        float lookChance = CurrentTier == SuspicionMeter.Tier.High   ? highLookAtPlayerChance
-                         : CurrentTier == SuspicionMeter.Tier.Medium ? mediumLookAtPlayerChance
-                         : lookAtPlayerChance;
-        bool towardPlayer = vision != null && vision.HasPlayer && Random.value < lookChance;
-        if (towardPlayer) return vision.PlayerRoot.position;
+        bool hasPlayer = vision != null && vision.HasPlayer;
+        SuspicionMeter.Tier tier = CurrentTier;
+
+        // Suspicious: they single you out.
+        if (hasPlayer && tier == SuspicionMeter.Tier.High && Random.value < highLookAtPlayerChance)
+            return vision.PlayerRoot.position;
+        if (hasPlayer && tier == SuspicionMeter.Tier.Medium && Random.value < mediumLookAtPlayerChance)
+            return vision.PlayerRoot.position;
+
+        // Calm: everyone is treated the same. Pick any seat - you are just one of the class.
+        if (tier == SuspicionMeter.Tier.Low && Random.value < lookAtPlayerChance)
+        {
+            int count = StudentAmbient.All.Count + (hasPlayer ? 1 : 0);
+            if (count > 0)
+            {
+                int pick = Random.Range(0, count);
+                if (pick < StudentAmbient.All.Count) return StudentAmbient.All[pick].transform.position;
+                return vision.PlayerRoot.position;
+            }
+        }
 
         // Middle of the room means most of the class, and never a wall.
         if ((home - transform.position).sqrMagnitude > 1f) return home;

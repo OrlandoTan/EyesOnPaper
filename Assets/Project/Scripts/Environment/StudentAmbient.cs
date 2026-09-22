@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // Background student: makes a seated/writing animation look less robotic.
@@ -20,6 +21,15 @@ public class StudentAmbient : MonoBehaviour
 
     [Header("Safety")]
     [SerializeField] bool removeColliders = true;
+
+    // Every seated student, so the invigilator can treat the class equally.
+    public static readonly List<StudentAmbient> All = new List<StudentAmbient>();
+
+    // Where someone looking at this student should aim (their head).
+    public Vector3 LookPoint => head != null ? head.position : transform.position + Vector3.up * 1.1f;
+
+    void OnEnable()  { if (!All.Contains(this)) All.Add(this); }
+    void OnDisable() { All.Remove(this); }
 
     Animator animator;
     Transform head;

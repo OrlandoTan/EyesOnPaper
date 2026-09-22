@@ -35,8 +35,10 @@ public class InvigilatorVisual : MonoBehaviour
     [SerializeField] float armSwing = 15f;
     [SerializeField] float bobHeight = 0.03f;
 
-    [Header("Head: turns toward the player")]
-    [SerializeField] float lookWhenCloserThan = 4f;
+    [Header("Head: casual glances at whoever is nearest (everyone equal); stares at YOU once suspicious")]
+    [Tooltip("Calm: glance at the nearest person (student or you) within this distance.")]
+    [SerializeField] float lookWhenCloserThan = 2.5f;
+    [SerializeField] float retargetInterval = 0.75f;
     [SerializeField, Range(0f, 1f)] float lookWhenSuspicionAbove = 0.4f;
     [SerializeField] float maxHeadYaw = 75f;
     [SerializeField] float maxHeadPitch = 30f;
@@ -55,7 +57,11 @@ public class InvigilatorVisual : MonoBehaviour
     int speedHash;
     float phase, blend, headWeight;
 
-    public bool IsWatchingPlayer => headWeight > 0.5f;
+    public bool IsWatchingPlayer => headWeight > 0.5f && targetIsPlayer;
+
+    Vector3 lookTarget;
+    bool targetIsPlayer, hasTarget;
+    float retargetTimer;
 
     void Awake()
     {
@@ -152,13 +158,11 @@ public class InvigilatorVisual : MonoBehaviour
         if (head == null || root == null) return;
         if (resetToRest) head.localRotation = rHead;
 
-        bool watch = vision != null && vision.HasPlayer &&
-                     (vision.DistanceToPlayer < lookWhenCloserThan ||
-                      (suspicion != null && suspicion.Value01 >= lookWhenSuspicionAbove));
-        headWeight = Mathf.MoveTowards(headWeight, watch ? 1f : 0f, dt * headTurnSpeed);
-        if (headWeight <= 0f || vision.PlayerHead == null) return;
+        ChooseLookTarget(dt);
+        headWeight = Mathf.MoveTowards(headWeight, hasTarget ? 1f : 0f, dt * headTurnSpeed);
+        if (headWeight <= 0f) return;
 
-        Vector3 local = root.InverseTransformDirection(vision.PlayerHead.position - head.position);
+        Vector3 local = root.InverseTransformDirection(lookTarget - head.position);
         float yaw = Mathf.Clamp(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg, -maxHeadYaw, maxHeadYaw);
         float flat = new Vector2(local.x, local.z).magnitude;
         float pitch = Mathf.Clamp(-Mathf.Atan2(local.y, flat) * Mathf.Rad2Deg, -maxHeadPitch, maxHeadPitch);
@@ -166,4 +170,40 @@ public class InvigilatorVisual : MonoBehaviour
         float w = Mathf.SmoothStep(0f, 1f, headWeight);
         head.rotation = Quaternion.AngleAxis(yaw * w, root.up) * Quaternion.AngleAxis(pitch * w, root.right) * head.rotation;
     }
+
+    // Suspicious -> always you. Calm -> the nearest person in range, and you are just one of them.
+    void ChooseLookTarget(float dt)
+    {
+        bool playerKnown = vision != null && vision.HasPlayer && vision.PlayerHead != null;
+        bool suspicious = playerKnown && suspicion != null && suspicion.Value01 >= lookWhenSuspicionAbove;
+
+        if (suspicious)
+        {
+            lookTarget = vision.PlayerHead.position;
+            targetIsPlayer = hasTarget = true;
+            return;
+        }
+
+        retargetTimer -= dt;
+        if (retargetTimer > 0f) return;
+        retargetTimer = retargetInterval;
+
+        hasTarget = false;
+        targetIsPlayer = false;
+        float best = lookWhenCloserThan;
+        Vector3 me = root.position;
+
+        foreach (var s in StudentAmbient.All)
+        {
+            float d = Flat(s.transform.position - me).magnitude;
+            if (d < best) { best = d; lookTarget = s.LookPoint; hasTarget = true; targetIsPlayer = false; }
+        }
+        if (playerKnown)
+        {
+            float d = Flat(vision.PlayerRoot.position - me).magnitude;
+            if (d < best) { lookTarget = vision.PlayerHead.position; hasTarget = true; targetIsPlayer = true; }
+        }
+    }
+
+    static Vector3 Flat(Vector3 v) => new Vector3(v.x, 0f, v.z);
 }
