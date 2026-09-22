@@ -20,6 +20,8 @@ public class JackMessenger : MonoBehaviour
     [SerializeField] CanvasGroup panel;          // auto-filled: CanvasGroup on this object
     [SerializeField] TMP_Text headerText;        // JackPanel/JackHeader
     [SerializeField] TMP_Text revealText;        // JackPanel/JackReveal
+    [Tooltip("Off = silent notification: no vibration sound AND no suspicion spike (a silent phone makes no noise).")]
+    [SerializeField] bool makeNoise = false;
     [SerializeField] AudioSource buzzAudio;      // optional: leave empty for a generated vibration sound
     [SerializeField, Range(0f, 1f)] float buzzVolume = 0.7f;
     [SerializeField] PhoneController phone;      // auto-filled from parents
@@ -62,14 +64,14 @@ public class JackMessenger : MonoBehaviour
 
         // No sound assigned: make a placeholder phone vibration so the buzz is never silent.
         // The buzz raises suspicion, so the player must always hear it.
-        if (buzzAudio == null)
+        if (makeNoise && buzzAudio == null)
         {
             buzzAudio = gameObject.AddComponent<AudioSource>();
             buzzAudio.playOnAwake = false;
             buzzAudio.spatialBlend = 0f;
             buzzAudio.clip = BuildVibration();
         }
-        buzzAudio.volume = buzzVolume;
+        if (buzzAudio != null) buzzAudio.volume = buzzVolume;
     }
 
     static AudioClip BuildVibration()
@@ -190,9 +192,12 @@ public class JackMessenger : MonoBehaviour
         state = State.Banner;
         timer = messageLifetime;
 
-        GameEvents.Buzz();
-        if (buzzAudio != null) buzzAudio.Play();
-        if (logEvents) Debug.Log($"[Jack] BUZZ - {(IsBundle ? $"bundle of {n}" : "single")}, {messageLifetime}s");
+        if (makeNoise)
+        {
+            GameEvents.Buzz();                       // invigilator can hear it -> suspicion spike
+            if (buzzAudio != null) buzzAudio.Play();
+        }
+        if (logEvents) Debug.Log($"[Jack] MESSAGE - {(IsBundle ? $"bundle of {n}" : "single")}, {messageLifetime}s");
 
         jackCombo.AcceptInput = false;
         jackCombo.Clear();
