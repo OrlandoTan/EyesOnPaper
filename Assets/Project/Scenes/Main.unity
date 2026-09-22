@@ -1167,6 +1167,7 @@ GameObject:
   - component: {fileID: 269066385}
   - component: {fileID: 269066386}
   - component: {fileID: 269066387}
+  - component: {fileID: 269066388}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1241,6 +1242,33 @@ MonoBehaviour:
   - {fileID: 0}
   hideOnEnd: []
   releaseCursor: 1
+--- !u!114 &269066388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 269066384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 802fa3960cafe4099bb9e7e4689592c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StudentDistractions
+  pencilKey: 31
+  pencilDuration: 6
+  pencilCooldown: 30
+  shoutKey: 20
+  shoutDuration: 16
+  shoutUses: 1
+  minDistanceFromPlayer: 5
+  preferFarthest: 1
+  invigilator: {fileID: 0}
+  vision: {fileID: 0}
+  departure: {fileID: 0}
+  showPrompts: 1
+  pencilReadyAt: 0
+  shoutsLeft: 0
+  pixel: {fileID: 0}
 --- !u!1001 &276134567
 PrefabInstance:
   m_ObjectHideFlags: 0
