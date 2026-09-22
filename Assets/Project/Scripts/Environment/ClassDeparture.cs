@@ -110,8 +110,15 @@ public class ClassDeparture : MonoBehaviour
         if (logEvents) Debug.Log($"[Departure] {leaving} of {StudentAmbient.All.Count} students will leave between {start:0}s and {end:0}s.");
     }
 
-    void SendOut(StudentAmbient s)
+    // Public so a distraction skill can send one student out on demand.
+    // Returns false when there's nowhere to send them, so the caller can decide
+    // whether the skill was spent.
+    public Transform ExitPoint => exitPoint;
+
+    public bool SendOut(StudentAmbient s)
     {
+        if (s == null || exitPoint == null) return false;
+
         var leaver = s.GetComponent<StudentLeaver>();
         if (leaver == null) leaver = s.gameObject.AddComponent<StudentLeaver>();
 
@@ -121,5 +128,6 @@ public class ClassDeparture : MonoBehaviour
         leaver.Begin(route, walkController, walkSpeed, handInPoint != null ? handInPause : 0f, towardFront);
 
         if (logEvents) Debug.Log($"[Departure] {s.name} is leaving ({StudentAmbient.All.Count} still sitting).");
+        return true;
     }
 }
