@@ -47,6 +47,7 @@ public class InvigilatorVisual : MonoBehaviour
     NavMeshAgent agent;
     VisionCone vision;
     SuspicionMeter suspicion;
+    InvigilatorController controller;
     Transform root;
 
     Transform tL, tR, sL, sR, aL, aR, fL, fR, head;
@@ -68,6 +69,7 @@ public class InvigilatorVisual : MonoBehaviour
         agent = GetComponentInParent<NavMeshAgent>();
         root = agent != null ? agent.transform : transform.parent;
         suspicion = GetComponentInParent<SuspicionMeter>();
+        controller = GetComponentInParent<InvigilatorController>();
         vision = root != null ? root.GetComponentInChildren<VisionCone>() : null;
 
         // Use an Animator if one is set up; switch off any that have no controller.
@@ -175,6 +177,18 @@ public class InvigilatorVisual : MonoBehaviour
     void ChooseLookTarget(float dt)
     {
         bool playerKnown = vision != null && vision.HasPlayer && vision.PlayerHead != null;
+
+        // Dealing with someone else: look at them, not at you. Without this the
+        // head keeps staring the player down through the whole distraction,
+        // which makes the skills look broken even though they're working.
+        if (controller != null && controller.IsDistracted)
+        {
+            lookTarget = controller.DistractionPoint + Vector3.up * 1.2f;
+            targetIsPlayer = false;
+            hasTarget = true;
+            return;
+        }
+
         bool suspicious = playerKnown && suspicion != null && suspicion.Value01 >= lookWhenSuspicionAbove;
 
         if (suspicious)
