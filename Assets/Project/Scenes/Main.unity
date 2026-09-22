@@ -1298,6 +1298,7 @@ GameObject:
   m_Component:
   - component: {fileID: 278439928}
   - component: {fileID: 278439927}
+  - component: {fileID: 278439929}
   m_Layer: 0
   m_Name: Students
   m_TagString: Untagged
@@ -1362,6 +1363,30 @@ Transform:
   - {fileID: 1914870079}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &278439929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 278439926}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b6e5f2ae5e0246c3bfaa85b3ad18bfe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClassDeparture
+  handInPoint: {fileID: 428354157}
+  exitPoint: {fileID: 1586736129}
+  frontOfRoom: {fileID: 471628268}
+  walkController: {fileID: 9100000, guid: 4e3615eaf75074ea387b47c0d80cf2ba, type: 2}
+  walkSpeed: 1.1
+  handInPause: 1.5
+  firstLeavesAt: 0.5
+  allGoneWithSecondsLeft: 20
+  stayUntilEnd: 0
+  timingJitter: 0.35
+  examDurationIfNoManager: 300
+  logEvents: 1
 --- !u!1001 &278651292
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1882,6 +1907,37 @@ PrefabInstance:
       addedObject: {fileID: 657367099}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 101e6ce94260e458aa7053e3812390ed, type: 3}
+--- !u!1 &428354156
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 428354157}
+  m_Layer: 0
+  m_Name: HandInPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &428354157
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428354156}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8.516, y: -0.66, z: 7.236}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &464161392
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6566,6 +6622,37 @@ MonoBehaviour:
   m_MinRegionArea: 2
   m_NavMeshData: {fileID: 23800000, guid: 59a33693b940240899925474b74a98cc, type: 2}
   m_BuildHeightMesh: 0
+--- !u!1 &1586736128
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1586736129}
+  m_Layer: 0
+  m_Name: ExitPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1586736129
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1586736128}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.373, y: -0.69, z: 6.96}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1612311084
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8657,3 +8744,5 @@ SceneRoots:
   - {fileID: 2088311882}
   - {fileID: 269066385}
   - {fileID: 278439928}
+  - {fileID: 428354157}
+  - {fileID: 1586736129}
