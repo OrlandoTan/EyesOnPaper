@@ -34,6 +34,14 @@ public class InvigilatorController : MonoBehaviour
     [SerializeField] private float investigateStandoff = 1.6f;
     [SerializeField] private float investigateRepathInterval = 0.3f;
 
+    [Header("Distraction")]
+    [Tooltip("Speed while crossing the room to deal with another student.")]
+    [SerializeField] private float distractedSpeed = 2.1f;
+    [Tooltip("How close they stand to the student they're dealing with.")]
+    [SerializeField] private float distractedStandoff = 1.2f;
+    [Tooltip("Optional. Where a shouting student gets escorted to.")]
+    [SerializeField] private Transform exitPoint;
+
     [Header("Scanning")]
     [Range(0f, 1f)]
     [SerializeField] private float scanChance = 0.45f;
@@ -83,6 +91,11 @@ public class InvigilatorController : MonoBehaviour
 
     public bool IsStopped { get; private set; }
     public bool IsScanning { get; private set; }
+    /// <summary>Dealing with someone else entirely. They are not looking for you.</summary>
+    public bool IsDistracted => distractionTimer > 0f;
+    /// <summary>What they're dealing with. The head-look aims here while distracted.</summary>
+    public Vector3 DistractionPoint => distractionPoint;
+    public float DistractionRemaining => Mathf.Max(0f, distractionTimer);
 
     private NavMeshAgent agent;
     private Vector3 home;
@@ -92,6 +105,11 @@ public class InvigilatorController : MonoBehaviour
     private float repathTimer;
     private bool wasLocked;
     private bool arrivalHandled;
+
+    private float distractionTimer;
+    private Vector3 distractionPoint;
+    private Transform escortTarget;
+    private bool reachedStudent;
 
     private float restingYaw;     // heading a stop settles on
     private float scanPhase;
@@ -160,6 +178,14 @@ public class InvigilatorController : MonoBehaviour
     private void Update()
     {
         if (IsStopped || !agent.isOnNavMesh) return;
+
+        // Someone else is causing a scene. That outranks everything, including
+        // being suspicious of you — which is the entire point of the skills.
+        if (IsDistracted)
+        {
+            HandleDistraction();
+            return;
+        }
 
         bool locked = suspicion != null && suspicion.IsLocked && vision != null && vision.HasPlayer;
         if (locked)
@@ -358,6 +384,60 @@ public class InvigilatorController : MonoBehaviour
         return false;
     }
 
+    // ---------- distraction ----------
+
+    /// <summary>
+    /// Pulled away to deal with another student. Walks over, deals with it, and
+    /// goes back to patrolling. An escort walks them out of the room first.
+    /// </summary>
+    public void Distract(Vector3 point, float duration, Transform escortTo = null)
+    {
+        if (IsStopped) return;
+
+        distractionPoint = point;
+        distractionTimer = duration;
+        escortTarget = escortTo != null ? escortTo : exitPoint;
+        reachedStudent = false;
+
+        agent.speed = distractedSpeed;
+        wasLocked = false;
+
+        if (agent.isOnNavMesh && TrySamplePoint(point, distractedStandoff, out Vector3 spot))
+            agent.SetDestination(spot);
+    }
+
+    private void HandleDistraction()
+    {
+        distractionTimer -= Time.deltaTime;
+        IsScanning = false;
+
+        if (distractionTimer <= 0f)
+        {
+            // Back to work.
+            agent.speed = walkSpeed;
+            PickDestination();
+            return;
+        }
+
+        bool arrived = !agent.pathPending && Arrived();
+
+        if (arrived && !reachedStudent)
+        {
+            reachedStudent = true;
+
+            // Escorting: follow them to the door. Otherwise stay and help.
+            if (escortTarget != null &&
+                TrySamplePoint(escortTarget.position, 1.5f, out Vector3 door))
+            {
+                agent.SetDestination(door);
+                distractionPoint = escortTarget.position;   // look where they're herding them
+            }
+        }
+
+        if (agent.velocity.sqrMagnitude > movingThreshold * movingThreshold) FaceTravel();
+        else FaceTowards(distractionPoint);
+    }
+
     // ---------- investigating ----------
 
     private void Investigate()
@@ -464,6 +544,7 @@ public class InvigilatorController : MonoBehaviour
     {
         IsStopped = true;
         IsScanning = false;
+        distractionTimer = 0f;
 
         if (agent != null && agent.isOnNavMesh)
         {
