@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Exam")]
     [Tooltip("Seconds. SCOPE says 5:00.")]
-    [SerializeField] private float examDuration = 300f;
+    [SerializeField] private float examDuration = 160f;
 
     [Header("Placeholder UI")]
     [SerializeField] private bool showPlaceholderUI = true;

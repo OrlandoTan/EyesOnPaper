@@ -1201,7 +1201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d970fd16e681149fc8f51b7b575fd633, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  examDuration: 300
+  examDuration: 160
   showPlaceholderUI: 1
   restartKey: 32
   lowTimeWarning: 30
