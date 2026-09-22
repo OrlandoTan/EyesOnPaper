@@ -44,6 +44,37 @@ public class InvigilatorController : MonoBehaviour
     [Range(0f, 1f)]
     [SerializeField] private float lookAtPlayerChance = 0.4f;
 
+    [Header("Suspicion tiers: how much they hover around the player")]
+    [Tooltip("Medium tier: chance each new stop is near the player's desk.")]
+    [Range(0f, 1f)] [SerializeField] private float mediumNearPlayerChance = 0.6f;
+    [Tooltip("High tier: chance each new stop is near the player's desk.")]
+    [Range(0f, 1f)] [SerializeField] private float highNearPlayerChance = 1f;
+    [Tooltip("How far from the player those stops are (min, max metres).")]
+    [SerializeField] private Vector2 nearPlayerDistance = new Vector2(1.4f, 2.8f);
+    [Tooltip("High tier: chance a stop is BEHIND the player, where they can't see you.")]
+    [Range(0f, 1f)] [SerializeField] private float highBehindChance = 0.7f;
+    [Range(0f, 1f)] [SerializeField] private float mediumLookAtPlayerChance = 0.75f;
+    [Range(0f, 1f)] [SerializeField] private float highLookAtPlayerChance = 1f;
+    [Tooltip("High tier: they linger longer at each stop.")]
+    [SerializeField] private Vector2 highPauseRange = new Vector2(3f, 6f);
+
+    [Header("Look-arounds: footsteps stop = they're watching")]
+    [Tooltip("Every stop is a look-around, so silence always means 'check before you cheat'.")]
+    [SerializeField] private bool everyStopIsLookAround = true;
+    [Tooltip("Scan length per tier (seconds).")]
+    [SerializeField] private Vector2 lowScanLength = new Vector2(2f, 3f);
+    [SerializeField] private Vector2 mediumScanLength = new Vector2(2.5f, 4f);
+    [SerializeField] private Vector2 highScanLength = new Vector2(3f, 5f);
+    [Tooltip("High tier: shrink the sweep so they keep their eyes mostly on the player.")]
+    [Range(0f, 1f)] [SerializeField] private float highSweepScale = 0.4f;
+
+    [Header("Mid-walk stops: freeze halfway down an aisle")]
+    [SerializeField] private bool midWalkStops = true;
+    [Tooltip("Seconds of walking between sudden stops, per tier.")]
+    [SerializeField] private Vector2 lowMidStopEvery = new Vector2(8f, 14f);
+    [SerializeField] private Vector2 mediumMidStopEvery = new Vector2(6f, 10f);
+    [SerializeField] private Vector2 highMidStopEvery = new Vector2(4f, 7f);
+
     [Header("Turning")]
     [Tooltip("Degrees per second. Everything turns at this rate — nothing ever snaps.")]
     [SerializeField] private float turnSpeed = 160f;
@@ -65,6 +96,14 @@ public class InvigilatorController : MonoBehaviour
     private float restingYaw;     // heading a stop settles on
     private float scanPhase;
     private float scanDirection = 1f;
+    private SuspicionMeter.Tier lastTier = SuspicionMeter.Tier.Low;
+
+    private float midStopCountdown;     // walking time left before the next sudden stop
+    private float midStopTimer;         // > 0 while frozen mid-walk
+    public bool IsMidWalkStop => midStopTimer > 0f;
+
+    private SuspicionMeter.Tier CurrentTier =>
+        suspicion != null ? suspicion.CurrentTier : SuspicionMeter.Tier.Low;
 
     private void Awake()
     {
@@ -84,12 +123,24 @@ public class InvigilatorController : MonoBehaviour
     {
         GameEvents.OnCaught    += Stop;
         GameEvents.OnExamEnded += Stop;
+        if (suspicion != null) suspicion.OnTierChanged += HandleTierChanged;
     }
 
     private void OnDisable()
     {
         GameEvents.OnCaught    -= Stop;
         GameEvents.OnExamEnded -= Stop;
+        if (suspicion != null) suspicion.OnTierChanged -= HandleTierChanged;
+    }
+
+    // Suspicion went UP a tier: drop the current stroll and head over now.
+    private void HandleTierChanged(SuspicionMeter.Tier tier)
+    {
+        bool rising = tier > lastTier;
+        lastTier = tier;
+        if (!rising || IsStopped || wasLocked || agent == null || !agent.isOnNavMesh) return;
+        EndMidWalkStop();
+        PickDestination();
     }
 
     private void Start()
@@ -102,6 +153,7 @@ public class InvigilatorController : MonoBehaviour
         }
 
         agent.speed = walkSpeed;
+        ResetMidStopCountdown();
         PickDestination();
     }
 
@@ -112,6 +164,7 @@ public class InvigilatorController : MonoBehaviour
         bool locked = suspicion != null && suspicion.IsLocked && vision != null && vision.HasPlayer;
         if (locked)
         {
+            EndMidWalkStop();
             Investigate();
             wasLocked = true;
             return;
@@ -131,10 +184,25 @@ public class InvigilatorController : MonoBehaviour
 
     private void Patrol()
     {
+        // Frozen mid-walk: stand still, look around, then carry on to the same spot.
+        if (midStopTimer > 0f)
+        {
+            midStopTimer -= Time.deltaTime;
+            FaceRest();
+            if (midStopTimer <= 0f) EndMidWalkStop();
+            return;
+        }
+
         if (agent.pathPending || !Arrived())
         {
             IsScanning = false;
             FaceTravel();
+
+            if (midWalkStops && !agent.pathPending && agent.velocity.magnitude > movingThreshold)
+            {
+                midStopCountdown -= Time.deltaTime;
+                if (midStopCountdown <= 0f) BeginMidWalkStop();
+            }
             return;
         }
 
@@ -157,7 +225,7 @@ public class InvigilatorController : MonoBehaviour
     private void BeginStop()
     {
         lastStop = transform.position;
-        IsScanning = Random.value < scanChance;
+        IsScanning = everyStopIsLookAround || Random.value < scanChance;
 
         // Face something worth facing. Standing nose-to-the-wall is what a
         // random heading gives you, and it reads as a broken robot.
@@ -169,14 +237,57 @@ public class InvigilatorController : MonoBehaviour
 
         if (!IsScanning) return;
 
-        pauseTimer = Random.Range(scanPause.x, scanPause.y);
+        Vector2 len = everyStopIsLookAround ? ScanLength() : scanPause;
+        pauseTimer = Random.Range(len.x, len.y);
         scanPhase = 0f;                                        // starts centred: no snap
         scanDirection = Random.value < 0.5f ? -1f : 1f;        // vary which way they look first
     }
 
+    // ---------- mid-walk stops ----------
+
+    private Vector2 ScanLength() =>
+        CurrentTier == SuspicionMeter.Tier.High   ? highScanLength :
+        CurrentTier == SuspicionMeter.Tier.Medium ? mediumScanLength : lowScanLength;
+
+    private void ResetMidStopCountdown()
+    {
+        Vector2 every = CurrentTier == SuspicionMeter.Tier.High   ? highMidStopEvery
+                      : CurrentTier == SuspicionMeter.Tier.Medium ? mediumMidStopEvery
+                      : lowMidStopEvery;
+        midStopCountdown = Random.Range(every.x, every.y);
+    }
+
+    private void BeginMidWalkStop()
+    {
+        agent.isStopped = true;                 // keeps the path; footsteps fall silent
+        IsScanning = true;
+
+        Vector3 lookAt = ChooseLookTarget();
+        Vector3 flat = Vector3.ProjectOnPlane(lookAt - transform.position, Vector3.up);
+        restingYaw = flat.sqrMagnitude > 0.01f
+            ? Quaternion.LookRotation(flat).eulerAngles.y
+            : transform.eulerAngles.y;
+
+        Vector2 len = ScanLength();
+        midStopTimer = Random.Range(len.x, len.y);
+        scanPhase = 0f;
+        scanDirection = Random.value < 0.5f ? -1f : 1f;
+    }
+
+    private void EndMidWalkStop()
+    {
+        midStopTimer = 0f;
+        IsScanning = false;
+        if (agent != null && agent.isOnNavMesh && !IsStopped) agent.isStopped = false;
+        ResetMidStopCountdown();
+    }
+
     private Vector3 ChooseLookTarget()
     {
-        bool towardPlayer = vision != null && vision.HasPlayer && Random.value < lookAtPlayerChance;
+        float lookChance = CurrentTier == SuspicionMeter.Tier.High   ? highLookAtPlayerChance
+                         : CurrentTier == SuspicionMeter.Tier.Medium ? mediumLookAtPlayerChance
+                         : lookAtPlayerChance;
+        bool towardPlayer = vision != null && vision.HasPlayer && Random.value < lookChance;
         if (towardPlayer) return vision.PlayerRoot.position;
 
         // Middle of the room means most of the class, and never a wall.
@@ -190,11 +301,46 @@ public class InvigilatorController : MonoBehaviour
     {
         IsScanning = false;
         arrivalHandled = false;
+        agent.speed = walkSpeed;
 
-        if (TrySamplePoint(home, wanderRadius, out Vector3 point))
+        SuspicionMeter.Tier tier = CurrentTier;
+        float nearChance = tier == SuspicionMeter.Tier.High   ? highNearPlayerChance
+                         : tier == SuspicionMeter.Tier.Medium ? mediumNearPlayerChance
+                         : 0f;
+
+        bool goNear = vision != null && vision.HasPlayer && Random.value < nearChance;
+        if (goNear && TrySampleNearPlayer(tier, out Vector3 near))
+            agent.SetDestination(near);
+        else if (TrySamplePoint(home, wanderRadius, out Vector3 point))
             agent.SetDestination(point);
 
-        pauseTimer = Random.Range(pauseRange.x, pauseRange.y);
+        Vector2 pause = tier == SuspicionMeter.Tier.High ? highPauseRange : pauseRange;
+        pauseTimer = Random.Range(pause.x, pause.y);
+    }
+
+    /// <summary>A spot a step or two from the player's desk. At High, usually behind them.</summary>
+    private bool TrySampleNearPlayer(SuspicionMeter.Tier tier, out Vector3 result)
+    {
+        Transform player = vision.PlayerRoot;
+        bool behind = tier == SuspicionMeter.Tier.High && Random.value < highBehindChance;
+
+        for (int i = 0; i < 16; i++)
+        {
+            Vector3 dir = behind
+                ? Quaternion.Euler(0f, Random.Range(-60f, 60f), 0f) * -player.forward
+                : Quaternion.Euler(0f, Random.Range(0f, 360f), 0f) * Vector3.forward;
+            dir.y = 0f;
+
+            Vector3 candidate = player.position + dir.normalized * Random.Range(nearPlayerDistance.x, nearPlayerDistance.y);
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 1f, NavMesh.AllAreas))
+            {
+                result = hit.position;
+                return true;
+            }
+        }
+
+        result = transform.position;
+        return false;
     }
 
     // ---------- investigating ----------
@@ -240,7 +386,8 @@ public class InvigilatorController : MonoBehaviour
         if (IsScanning)
         {
             scanPhase += scanSpeed * Mathf.Deg2Rad * Time.deltaTime * scanDirection;
-            yaw += Mathf.Sin(scanPhase) * scanSweep;
+            float sweep = CurrentTier == SuspicionMeter.Tier.High ? scanSweep * highSweepScale : scanSweep;
+            yaw += Mathf.Sin(scanPhase) * sweep;
         }
 
         FaceYaw(yaw);
