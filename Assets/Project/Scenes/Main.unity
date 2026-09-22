@@ -1201,7 +1201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d970fd16e681149fc8f51b7b575fd633, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  examDuration: 300
+  examDuration: 160
   showPlaceholderUI: 1
   restartKey: 32
   lowTimeWarning: 30
@@ -5691,6 +5691,7 @@ MonoBehaviour:
   armSwing: 15
   bobHeight: 0.03
   lookWhenCloserThan: 4
+  retargetInterval: 0.75
   lookWhenSuspicionAbove: 0.4
   maxHeadYaw: 75
   maxHeadPitch: 30
@@ -5960,6 +5961,7 @@ MonoBehaviour:
   farGainMultiplier: 0.6
   lockDuration: 6
   lockedDecay: 1
+  buzzAlertsInvigilator: 0
   buzzSpikeNear: 25
   buzzSpikeFar: 4
   buzzHearRadius: 6
@@ -5998,6 +6000,10 @@ MonoBehaviour:
   pitchRange: {x: 0.92, y: 1.08}
   minDistance: 1.5
   maxDistance: 22
+  falloffSharpness: 2.5
+  muffleWithDistance: 1
+  nearCutoff: 22000
+  farCutoff: 750
 --- !u!82 &1517777467
 AudioSource:
   m_ObjectHideFlags: 0
