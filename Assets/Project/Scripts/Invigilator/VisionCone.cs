@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Step 3: the invigilator's eyes. Answers one question every frame — can they
+/// Step 3: the invigilator's eyes. Answers one question every frame - can they
 /// see the player right now? Angle, then distance, then a raycast so walls and
 /// desks actually block sight.
 ///
@@ -13,7 +13,7 @@ public class VisionCone : MonoBehaviour
     [Header("Cone")]
     [Tooltip("Where sight starts. Leave empty to use this object.")]
     [SerializeField] private Transform eye;
-    [Tooltip("Full width of the cone in degrees — 100 means 50 to each side.")]
+    [Tooltip("Full width of the cone in degrees - 100 means 50 to each side.")]
     [SerializeField] private float viewAngle = 100f;
     [SerializeField] private float viewDistance = 12f;
     [Tooltip("What blocks sight. Walls and desks need to be in here.")]
@@ -142,7 +142,7 @@ public class VisionCone : MonoBehaviour
         if (PlayerHead == null)
         {
             Debug.LogWarning($"[VisionCone] '{player.name}' has no child named '{headChildName}'. " +
-                             "Aiming at the root instead — sightlines will read low until it's added.", this);
+                             "Aiming at the root instead - sightlines will read low until it's added.", this);
             PlayerHead = PlayerRoot;
         }
 
@@ -150,8 +150,8 @@ public class VisionCone : MonoBehaviour
     }
 
     /// <summary>
-    /// Finds the head. If more than one object carries the name — a leftover
-    /// stand-in alongside the real one, say — the one holding the camera wins,
+    /// Finds the head. If more than one object carries the name - a leftover
+    /// stand-in alongside the real one, say - the one holding the camera wins,
     /// because that is the head the player actually looks through.
     /// </summary>
     private static Transform FindHead(Transform root, string childName)

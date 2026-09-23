@@ -15,7 +15,7 @@ public class PhoneController : MonoBehaviour
 
     public bool IsOut { get; private set; }
 
-    // True once the camera has finished tilting down — only then should combo input count
+    // True once the camera has finished tilting down - only then should combo input count
     public bool IsReady => IsOut && look != null && look.IsLookingAtPhone;
 
     void Start()

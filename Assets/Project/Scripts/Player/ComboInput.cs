@@ -57,6 +57,10 @@ public class ComboInput : MonoBehaviour
 
     public bool IsActive => sequence.Count > 0 && !completed;
 
+    [Header("Feel")]
+    [Tooltip("An arrow pressed this long before its icon appears still counts, instead of being dropped.")]
+    [SerializeField] float inputBufferTime = 0.15f;
+
     // When false this combo ignores the keyboard (e.g. your own combo while Jack's message is open).
     public bool AcceptInput { get; set; } = true;
 
@@ -85,6 +89,8 @@ public class ComboInput : MonoBehaviour
     bool completed;
     float errorTimer;
     int revealed;
+    Arrow? bufferedArrow;       // pressed just before its icon appeared
+    float bufferedAt;
     float revealClock;
     Vector2 rowBasePos;
 
@@ -119,6 +125,7 @@ public class ComboInput : MonoBehaviour
         progress = 0;
         completed = false;
         errorTimer = 0f;
+        bufferedArrow = null;
         ResetShake();
         Rebuild();
         SetStatus(idleMessage, idleTextColor);
@@ -130,6 +137,7 @@ public class ComboInput : MonoBehaviour
         progress = 0;
         completed = false;
         errorTimer = 0f;
+        bufferedArrow = null;
         ResetShake();
         Rebuild();
         SetStatus("", idleTextColor);
@@ -163,6 +171,7 @@ public class ComboInput : MonoBehaviour
 
         if (errorTimer > 0f)
         {
+            bufferedArrow = null;          // a press during lockout shouldn't resurface later
             errorTimer -= Time.deltaTime;
             UpdateShake();
             if (showCountdown && errorTimer > 0f)
@@ -180,14 +189,43 @@ public class ComboInput : MonoBehaviour
         if (inputOwner != null && inputOwner != this) return;   // another combo has the keyboard
         if (inputOwner == null && Time.unscaledTime < inputBlockedUntil) return;   // just handed back
         if (!AcceptInput || !IsActive || phone == null || !phone.IsReady) return;
-        if (!FullyRevealed) return;                              // can't enter what you can't see yet
+        // You can enter any arrow that's already on screen. Waiting for the WHOLE
+        // sequence to finish revealing makes the first arrow feel dead for the
+        // length of the animation, which punishes exactly the players who are
+        // fastest at reading it.
+        if (progress >= revealed)
+        {
+            // Not visible yet - but remember the press, so someone reading ahead
+            // of the animation doesn't simply lose the input. Only buffered here:
+            // a press blocked because another combo owns the keyboard is never
+            // stored, or it would leak across from Jack's message to this one.
+            Arrow? early = ReadArrow();
+            if (early != null)
+            {
+                bufferedArrow = early;
+                bufferedAt = Time.unscaledTime;
+            }
+            return;
+        }
 
         Arrow? pressed = ReadArrow();
+
+        if (pressed == null && bufferedArrow.HasValue)
+        {
+            if (Time.unscaledTime - bufferedAt <= inputBufferTime) pressed = bufferedArrow;
+            bufferedArrow = null;
+        }
+        else if (pressed != null)
+        {
+            bufferedArrow = null;
+        }
+
         if (pressed == null) return;
 
         if (pressed.Value == sequence[progress])
         {
             progress++;
+            RevealNext();          // keeping up with the reveal pulls the next arrow forward
             Refresh();
             if (progress >= sequence.Count)
             {
@@ -280,9 +318,29 @@ public class ComboInput : MonoBehaviour
         revealClock += Time.deltaTime;
         float perArrow = RevealTime / Mathf.Max(1, sequence.Count);
         int target = Mathf.Min(sequence.Count, Mathf.FloorToInt(revealClock / Mathf.Max(0.0001f, perArrow)) + 1);
-        if (target == revealed) return;
+        if (target <= revealed) return;        // never walk the reveal backwards
 
-        revealed = target;
+        ShowUpTo(target);
+    }
+
+    /// <summary>
+    /// Entering an arrow the moment it appears brings the next one forward, so the
+    /// reveal paces a beginner without capping someone who already knows the keys.
+    /// The clock is wound on to match, or UpdateReveal would just undo it.
+    /// </summary>
+    void RevealNext()
+    {
+        if (revealed >= sequence.Count) return;
+
+        ShowUpTo(revealed + 1);
+
+        float perArrow = RevealTime / Mathf.Max(1, sequence.Count);
+        revealClock = Mathf.Max(revealClock, (revealed - 1) * perArrow);
+    }
+
+    void ShowUpTo(int count)
+    {
+        revealed = Mathf.Clamp(count, 0, sequence.Count);
         for (int i = 0; i < icons.Count; i++) icons[i].enabled = i < revealed;
         if (revealed >= sequence.Count) OnSequenceRevealed?.Invoke();
     }

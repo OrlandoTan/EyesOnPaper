@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// Moves the invigilator, and — importantly — is the *only* thing that rotates them.
+/// Moves the invigilator, and - importantly - is the *only* thing that rotates them.
 ///
 /// The NavMeshAgent's own updateRotation is switched off for good in Awake. Every
 /// heading goes through FaceYaw, which turns at a fixed rate, so the vision cone
@@ -84,7 +84,7 @@ public class InvigilatorController : MonoBehaviour
     [SerializeField] private Vector2 highMidStopEvery = new Vector2(4f, 7f);
 
     [Header("Turning")]
-    [Tooltip("Degrees per second. Everything turns at this rate — nothing ever snaps.")]
+    [Tooltip("Degrees per second. Everything turns at this rate - nothing ever snaps.")]
     [SerializeField] private float turnSpeed = 160f;
     [Tooltip("Below this speed they're treated as standing still.")]
     [SerializeField] private float movingThreshold = 0.15f;
@@ -180,7 +180,7 @@ public class InvigilatorController : MonoBehaviour
         if (IsStopped || !agent.isOnNavMesh) return;
 
         // Someone else is causing a scene. That outranks everything, including
-        // being suspicious of you — which is the entire point of the skills.
+        // being suspicious of you - which is the entire point of the skills.
         if (IsDistracted)
         {
             HandleDistraction();
@@ -334,7 +334,7 @@ public class InvigilatorController : MonoBehaviour
         // Middle of the room means most of the class, and never a wall.
         if ((home - transform.position).sqrMagnitude > 1f) return home;
 
-        // Standing on the centre already — pick a heading at random instead.
+        // Standing on the centre already - pick a heading at random instead.
         return transform.position + Quaternion.Euler(0f, Random.Range(0f, 360f), 0f) * Vector3.forward;
     }
 
@@ -402,6 +402,9 @@ public class InvigilatorController : MonoBehaviour
         agent.speed = distractedSpeed;
         wasLocked = false;
 
+        // Whatever they were suspicious about, it's someone else's problem now.
+        if (suspicion != null) suspicion.ClearLock();
+
         if (agent.isOnNavMesh && TrySamplePoint(point, distractedStandoff, out Vector3 spot))
             agent.SetDestination(spot);
     }
@@ -410,6 +413,10 @@ public class InvigilatorController : MonoBehaviour
     {
         distractionTimer -= Time.deltaTime;
         IsScanning = false;
+
+        // Held at zero for the whole distraction, so nothing can re-arm behind
+        // their back and pounce the moment they turn round.
+        if (suspicion != null) suspicion.ClearLock();
 
         if (distractionTimer <= 0f)
         {
@@ -508,7 +515,7 @@ public class InvigilatorController : MonoBehaviour
 
     /// <summary>
     /// Random point in a disc, snapped to the NavMesh. Prefers somewhere actually
-    /// worth walking to — a point two steps away makes them look twitchy.
+    /// worth walking to - a point two steps away makes them look twitchy.
     /// </summary>
     private bool TrySamplePoint(Vector3 around, float radius, out Vector3 result)
     {

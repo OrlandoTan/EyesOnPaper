@@ -115,7 +115,7 @@ public class GameManager : MonoBehaviour
         GameEvents.ExamEnded();
     }
 
-    /// <summary>Any key or click. Deliberately forgiving — nobody should hunt for the button.</summary>
+    /// <summary>Any key or click. Deliberately forgiving - nobody should hunt for the button.</summary>
     private bool Dismissed()
     {
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) return true;
@@ -130,7 +130,7 @@ public class GameManager : MonoBehaviour
 
     private void HandleCaught()
     {
-        // Caught after the bell doesn't count — you already handed the paper in.
+        // Caught after the bell doesn't count - you already handed the paper in.
         if (Current != State.Exam) return;
         Current = State.Caught;
     }
@@ -241,6 +241,6 @@ public class GameManager : MonoBehaviour
 
         GUI.Label(new Rect(box.x, box.y + 92f, box.width, 24f), detail, hint);
         GUI.Label(new Rect(box.x, box.y + 126f, box.width, 24f),
-                  $"placeholder screen — press {restartKey} to restart", hint);
+                  $"placeholder screen - press {restartKey} to restart", hint);
     }
 }
