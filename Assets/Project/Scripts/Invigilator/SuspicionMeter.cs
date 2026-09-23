@@ -5,7 +5,7 @@ using UnityEngine;
 /// Step 4: 0-100 suspicion. Rises from what the player does, falls while they
 /// behave. Drives the behaviour tiers later, and fires GameEvents.Caught() at 100.
 ///
-/// Every number here is from SCOPE.md §5 — tune them in the Inspector, not in code.
+/// Every number here is from SCOPE.md §5 - tune them in the Inspector, not in code.
 /// </summary>
 public class SuspicionMeter : MonoBehaviour
 {
@@ -48,12 +48,12 @@ public class SuspicionMeter : MonoBehaviour
     [Header("Lock-on")]
     [Tooltip("Seconds the invigilator stays fixed on the player after last seeing the phone.")]
     [SerializeField] private float lockDuration = 6f;
-    [Tooltip("Decay while locked on. Much slower than normal — being seen has to cost something.")]
+    [Tooltip("Decay while locked on. Much slower than normal - being seen has to cost something.")]
     [SerializeField] private float lockedDecay = 1f;
 
     [Header("Buzz")]
     [Tooltip("Off by default. Jack's timing isn't the player's choice, so punishing it " +
-             "is a dice roll — and SCOPE's first pillar says errors must trace back to " +
+             "is a dice roll - and SCOPE's first pillar says errors must trace back to " +
              "something the player did.")]
     [SerializeField] private bool buzzAlertsInvigilator = false;
 
@@ -141,7 +141,7 @@ public class SuspicionMeter : MonoBehaviour
         }
         else if (seen && vision.PlayerLookAwayAngle >= sidewaysAngle)
         {
-            // Looking up at the front is what honest students do — for a while.
+            // Looking up at the front is what honest students do - for a while.
             lookAwayTimer += Time.deltaTime;
             if (lookAwayTimer >= lookAwayGrace)
             {
@@ -208,6 +208,17 @@ public class SuspicionMeter : MonoBehaviour
 
         if (vision == null) { Add(buzzSpikeFar); return; }
         Add(vision.DistanceToPlayer <= buzzHearRadius ? buzzSpikeNear : buzzSpikeFar);
+    }
+
+    /// <summary>
+    /// Drop the lock entirely. Called while the invigilator is dealing with
+    /// someone else - a distraction that only postponed the lock would buy time
+    /// without buying safety, and decay would still be crawling at lockedDecay.
+    /// </summary>
+    public void ClearLock()
+    {
+        lockTimer = 0f;
+        lookAwayTimer = 0f;
     }
 
     private void Freeze()

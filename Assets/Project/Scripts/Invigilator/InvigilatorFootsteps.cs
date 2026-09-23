@@ -3,7 +3,7 @@ using UnityEngine.AI;
 
 /// <summary>
 /// Footsteps, so the player can hear where the invigilator is without turning
-/// round to look — which now costs them (see SuspicionMeter's over-shoulder rule).
+/// round to look - which now costs them (see SuspicionMeter's over-shoulder rule).
 ///
 /// SCOPE §3.5's fairness rule: "footsteps are always audible". This is that rule.
 ///
@@ -37,7 +37,7 @@ public class InvigilatorFootsteps : MonoBehaviour
     [Header("Muffling")]
     [Tooltip("Distant steps lose their high end, the way they do through air and furniture.")]
     [SerializeField] private bool muffleWithDistance = true;
-    [Tooltip("Cutoff in Hz right next to you — effectively no filtering.")]
+    [Tooltip("Cutoff in Hz right next to you - effectively no filtering.")]
     [SerializeField] private float nearCutoff = 22000f;
     [Tooltip("Cutoff in Hz at maximum range. Low values sound far away.")]
     [SerializeField] private float farCutoff = 750f;
@@ -54,7 +54,7 @@ public class InvigilatorFootsteps : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         source = GetComponent<AudioSource>();
 
-        // Positional audio is the entire point — the player has to be able to
+        // Positional audio is the entire point - the player has to be able to
         // tell that someone is behind them, not merely that someone exists.
         source.playOnAwake = false;
         source.loop = false;
@@ -163,7 +163,7 @@ public class InvigilatorFootsteps : MonoBehaviour
 
     /// <summary>
     /// A short thud: a low sine for the heel, a little noise for the scuff, and a
-    /// fast decay. Not good audio — just honest placeholder audio, so the fairness
+    /// fast decay. Not good audio - just honest placeholder audio, so the fairness
     /// rule holds before anyone has time to go sound hunting.
     /// </summary>
     private static AudioClip BuildPlaceholderStep()

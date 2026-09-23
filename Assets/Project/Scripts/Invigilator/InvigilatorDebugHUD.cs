@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Debug only — the suspicion bar plus keys to fake the player half.
+/// Debug only - the suspicion bar plus keys to fake the player half.
 ///
 ///   P      fake phone in / out   (fires PhoneShown / PhoneHidden)
 ///   B      fake buzz             (fires Buzz)
@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 ///   [ / ]  nudge suspicion by 10
 ///
 /// The real phone fires the same events, so once the player half is in the scene
-/// untick Enable Debug Keys — otherwise P fights PhoneController over the state.
+/// untick Enable Debug Keys - otherwise P fights PhoneController over the state.
 /// </summary>
 public class InvigilatorDebugHUD : MonoBehaviour
 {

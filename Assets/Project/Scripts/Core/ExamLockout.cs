@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// When the run ends — caught or time up — switch the player off.
+/// When the run ends - caught or time up - switch the player off.
 ///
 /// Without this the exam is over but Space still raises the phone and the arrow
 /// keys still run combos behind the end screen.
@@ -25,7 +25,7 @@ public class ExamLockout : MonoBehaviour
     [Tooltip("Optional, for picking off one script when a whole object is too blunt.")]
     [SerializeField] private MonoBehaviour[] disableOnEnd;
 
-    [Tooltip("Objects hidden when the exam ends — the phone model, combo UI, and so on.")]
+    [Tooltip("Objects hidden when the exam ends - the phone model, combo UI, and so on.")]
     [SerializeField] private GameObject[] hideOnEnd;
 
     [Tooltip("Give the mouse back so the end screen can be clicked.")]
@@ -46,8 +46,8 @@ public class ExamLockout : MonoBehaviour
     }
 
     /// <summary>
-    /// Switch off gameplay scripts only. Engine components — uGUI graphics, URP's
-    /// camera data, TextMeshPro — are MonoBehaviours too, and disabling those
+    /// Switch off gameplay scripts only. Engine components - uGUI graphics, URP's
+    /// camera data, TextMeshPro - are MonoBehaviours too, and disabling those
     /// blanks the screen instead of stopping the game. Our own scripts are the
     /// ones with no namespace, which is a blunt rule but an accurate one here.
     /// </summary>

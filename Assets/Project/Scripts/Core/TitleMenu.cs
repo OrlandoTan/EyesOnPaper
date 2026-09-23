@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 /// <summary>
 /// The front end: a drawn classroom, the title on the board, and real buttons.
 ///
-/// Everything here is generated in code — flat shapes and rounded rectangles —
+/// Everything here is generated in code - flat shapes and rounded rectangles -
 /// so it needs no art. Turn off Draw Backdrop once there's a real classroom
 /// behind the camera and the buttons will sit straight on top of it.
 /// </summary>
@@ -16,17 +16,24 @@ public class TitleMenu : MonoBehaviour
     [Header("Text")]
     [SerializeField] private string gameTitle = "EYES ON PAPER";
     [SerializeField] private string tagline = "You cheated on every question. You still failed.";
-    [TextArea(4, 12)]
-    [SerializeField] private string howToText =
-        "Mouse  —  look around\n" +
-        "Hold Space  —  take out your phone\n" +
-        "Arrow keys  —  enter the arrow combo\n" +
-        "Click or 1-4  —  mark an answer\n" +
-        "\n" +
-        "Jack texts you answers. Each one shows for three seconds, then it's gone for good.\n" +
-        "Reading one means an arrow combo with your phone out, where anyone could see it.\n" +
-        "\n" +
-        "The invigilator is watching. Listen for footsteps.";
+    [Tooltip("One per line, written as  Key|What it does")]
+    [SerializeField] private string[] controls =
+    {
+        "Mouse|look around",
+        "Hold Space|take out your phone",
+        "Arrow keys|enter the arrow combo",
+        "Click or 1-4|mark an answer",
+        "Q|make a classmate drop a pencil",
+        "G|call a classmate, phone must be out",
+        "F|make a classmate shout, once per exam",
+    };
+
+    [TextArea(3, 8)]
+    [SerializeField] private string rules =
+        "Jack texts you the answers. Each message shows for three seconds, then it is gone for good.\n" +
+        "Reading one means entering an arrow combo with your phone out, where anyone could see it.\n" +
+        "The invigilator is watching. Listen for footsteps.\n" +
+        "Q, G and F pull him away from you. Use them to buy a clean window.";
 
     [Header("Flow")]
     [Tooltip("Scene to load. Must be in Build Settings.")]
@@ -47,6 +54,7 @@ public class TitleMenu : MonoBehaviour
     private Page page = Page.Title;
     private Texture2D pixel;
     private Texture2D rounded;
+    private GUIStyle roundedStyle;
 
     private void Awake()
     {
@@ -147,55 +155,129 @@ public class TitleMenu : MonoBehaviour
 
         if (page == Page.Leaving) return;
 
-        float w = 260f * s;
-        float h = 64f * s;
+        float w = 280f * s;
+        float h = 68f * s;
         float cx = (Screen.width - w) * 0.5f;
-        float y = Screen.height * 0.52f;
+        float y = Screen.height * 0.55f;
 
         if (Button(new Rect(cx, y, w, h), "START", s, true)) StartGame();
-        if (Button(new Rect(cx, y + h + 16f * s, w, h * 0.78f), "how to play", s, false)) page = Page.HowTo;
+        if (Button(new Rect(cx, y + h + 26f * s, w, h * 0.80f), "how to play", s, false)) page = Page.HowTo;
     }
 
     private void DrawHowTo(float s)
     {
-        float w = Mathf.Min(620f * s, Screen.width - 60f * s);
-        float h = Mathf.Min(440f * s, Screen.height - 150f * s);
-        var card = new Rect((Screen.width - w) * 0.5f, Screen.height * 0.12f, w, h);
+        string[] ruleLines = rules.Split('\n');
 
-        // Paper card with a soft shadow
-        Fill(new Rect(card.x + 6f * s, card.y + 8f * s, card.width, card.height), new Color(0f, 0f, 0f, 0.18f), true);
+        float bh = 62f * s;
+        float buttonGap = 28f * s;
+        float margin = 20f;
+
+        // Measure at this scale, then shrink if the card plus its buttons would
+        // not fit. Everything scales linearly, so one pass is exact enough.
+        float height = MeasureCard(s, ruleLines, out float[] ruleHeights, out GUIStyle ruleStyle, out float width);
+        float block = height + buttonGap + bh + margin * 2f;
+
+        if (block > Screen.height)
+        {
+            s *= (Screen.height - margin * 2f) / (block - margin * 2f);
+            bh = 62f * s;
+            buttonGap = 28f * s;
+            height = MeasureCard(s, ruleLines, out ruleHeights, out ruleStyle, out width);
+            block = height + buttonGap + bh + margin * 2f;
+        }
+
+        float top = Mathf.Max(margin, (Screen.height - block) * 0.5f + margin);
+        var card = new Rect((Screen.width - width) * 0.5f, top, width, height);
+
+        float pad = 44f * s;
+        float rowH = 42f * s;
+
+        Fill(new Rect(card.x + 6f * s, card.y + 9f * s, card.width, card.height), new Color(0f, 0f, 0f, 0.16f), true);
         Fill(card, new Color(0.99f, 0.98f, 0.94f), true);
 
-        GUI.Label(new Rect(card.x, card.y + 22f * s, card.width, 40f * s),
-                  "HOW TO PLAY", Centred(Mathf.RoundToInt(28f * s), buttonInk));
+        GUI.Label(new Rect(card.x, card.y + 34f * s, card.width, 44f * s),
+                  "HOW TO PLAY", Centred(Mathf.RoundToInt(31f * s), buttonInk));
 
-        var body = new GUIStyle(GUI.skin.label)
+        var keyStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = Mathf.RoundToInt(19f * s),
+            alignment = TextAnchor.MiddleRight,
+        };
+        keyStyle.normal.textColor = new Color(0.24f, 0.20f, 0.14f);
+
+        var actionStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = Mathf.RoundToInt(19f * s),
+            alignment = TextAnchor.MiddleLeft,
+        };
+        actionStyle.normal.textColor = new Color(0.38f, 0.35f, 0.30f);
+
+        float split = card.x + width * 0.38f;
+        float y = card.y + 108f * s;
+
+        foreach (string row in controls)
+        {
+            int bar = row.IndexOf('|');
+            string key = bar >= 0 ? row.Substring(0, bar) : row;
+            string action = bar >= 0 ? row.Substring(bar + 1) : "";
+
+            GUI.Label(new Rect(card.x + pad, y, split - card.x - pad - 18f * s, rowH), key, keyStyle);
+            GUI.Label(new Rect(split + 22f * s, y, card.xMax - split - pad - 22f * s, rowH), action, actionStyle);
+            y += rowH;
+        }
+
+        y += 22f * s;
+        Fill(new Rect(card.x + pad, y, card.width - pad * 2f, 1f), new Color(0f, 0f, 0f, 0.13f));
+        y += 24f * s;
+
+        for (int i = 0; i < ruleLines.Length; i++)
+        {
+            GUI.Label(new Rect(card.x + pad, y, width - pad * 2f, ruleHeights[i]), ruleLines[i], ruleStyle);
+            y += ruleHeights[i] + 14f * s;
+        }
+
+        float bw = 230f * s;
+        float by = card.yMax + buttonGap;
+
+        if (Button(new Rect(Screen.width * 0.5f - bw - 14f * s, by, bw, bh), "back", s, false))
+            page = Page.Title;
+
+        if (Button(new Rect(Screen.width * 0.5f + 14f * s, by, bw, bh), "START", s, true))
+            StartGame();
+    }
+
+    /// <summary>Works out how tall the card needs to be, measuring wrapped text properly.</summary>
+    private float MeasureCard(float s, string[] ruleLines, out float[] ruleHeights,
+                              out GUIStyle ruleStyle, out float width)
+    {
+        float pad = 44f * s;
+        width = Mathf.Min(820f * s, Screen.width - 80f * s);
+        float textWidth = width - pad * 2f;
+
+        ruleStyle = new GUIStyle(GUI.skin.label)
         {
             fontSize = Mathf.RoundToInt(17f * s),
             alignment = TextAnchor.UpperLeft,
             wordWrap = true,
         };
-        body.normal.textColor = new Color(0.22f, 0.20f, 0.16f);
+        ruleStyle.normal.textColor = new Color(0.34f, 0.31f, 0.26f);
 
-        GUI.Label(new Rect(card.x + 34f * s, card.y + 76f * s, card.width - 68f * s, card.height - 110f * s),
-                  howToText, body);
+        ruleHeights = new float[ruleLines.Length];
+        float rulesHeight = 0f;
+        for (int i = 0; i < ruleLines.Length; i++)
+        {
+            ruleHeights[i] = ruleStyle.CalcHeight(new GUIContent(ruleLines[i]), textWidth);
+            rulesHeight += ruleHeights[i] + 14f * s;
+        }
 
-        float bw = 220f * s;
-        float bh = 58f * s;
-        float by = card.yMax + 26f * s;
-
-        if (Button(new Rect(Screen.width * 0.5f - bw - 10f * s, by, bw, bh), "back", s, false))
-            page = Page.Title;
-
-        if (Button(new Rect(Screen.width * 0.5f + 10f * s, by, bw, bh), "START", s, true))
-            StartGame();
+        return 108f * s + controls.Length * 42f * s + 46f * s + rulesHeight + pad;
     }
 
-    /// <summary>Rounded button with hover and press states. Returns true on click.</summary>
+    /// <summary>Rounded button. Returns true on click.</summary>
     private bool Button(Rect rect, string label, float s, bool primary)
     {
         bool hover = rect.Contains(Event.current.mousePosition);
-        // UnityEngine.Input throws in this project — active input handling is
+        // UnityEngine.Input throws in this project - active input handling is
         // the Input System package only.
         bool held = hover && Mouse.current != null && Mouse.current.leftButton.isPressed;
 
@@ -220,7 +302,26 @@ public class TitleMenu : MonoBehaviour
     private void Fill(Rect r, Color c, bool round = false)
     {
         GUI.color = c;
-        GUI.DrawTexture(r, round ? rounded : pixel, ScaleMode.StretchToFill, true);
+
+        if (round)
+        {
+            // 9-sliced, so the corner radius stays the size it was drawn at.
+            // Stretching the whole texture turns a 16px corner into a 300px
+            // blur once the card is big.
+            if (roundedStyle == null)
+            {
+                roundedStyle = new GUIStyle();
+                roundedStyle.normal.background = rounded;
+                roundedStyle.border = new RectOffset(18, 18, 18, 18);
+            }
+
+            GUI.Box(r, GUIContent.none, roundedStyle);
+        }
+        else
+        {
+            GUI.DrawTexture(r, pixel, ScaleMode.StretchToFill, true);
+        }
+
         GUI.color = Color.white;
     }
 

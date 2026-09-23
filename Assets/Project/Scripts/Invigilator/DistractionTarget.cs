@@ -9,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public class DistractionTarget : MonoBehaviour
 {
-    [Tooltip("Off for a student who shouldn't be picked — the player's neighbour, say.")]
+    [Tooltip("Off for a student who shouldn't be picked - the player's neighbour, say.")]
     [SerializeField] private bool available = true;
 
     public bool Available => available && isActiveAndEnabled;
