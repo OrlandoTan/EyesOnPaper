@@ -1257,18 +1257,29 @@ MonoBehaviour:
   pencilKey: 31
   pencilDuration: 6
   pencilCooldown: 30
+  callKey: 21
+  callDuration: 12
+  callUses: 2
+  ringDelay: 1.5
+  callNeedsPhoneOut: 1
   shoutKey: 20
   shoutDuration: 16
   shoutUses: 1
   minDistanceFromPlayer: 5
   preferFarthest: 1
+  pencilClip: {fileID: 8300000, guid: 284813f46f381488597a091701341035, type: 3}
+  callClip: {fileID: 8300000, guid: d7fc3bb2a42b94dd7ba435a949ce7817, type: 3}
+  shoutClip: {fileID: 8300000, guid: c4c293293c9e440b694623584343ef59, type: 3}
+  pencilVolume: 0.45
+  callVolume: 0.7
+  shoutVolume: 0.9
+  pencilPitch: 1.45
+  audioMaxDistance: 28
   invigilator: {fileID: 0}
   vision: {fileID: 0}
   departure: {fileID: 0}
+  suspicion: {fileID: 0}
   showPrompts: 1
-  pencilReadyAt: 0
-  shoutsLeft: 0
-  pixel: {fileID: 0}
 --- !u!1001 &276134567
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6135,6 +6146,9 @@ MonoBehaviour:
   investigateSpeed: 1.9
   investigateStandoff: 1.6
   investigateRepathInterval: 0.3
+  distractedSpeed: 2.1
+  distractedStandoff: 1.2
+  exitPoint: {fileID: 0}
   scanChance: 0.45
   scanPause: {x: 3, y: 5}
   scanSweep: 75
