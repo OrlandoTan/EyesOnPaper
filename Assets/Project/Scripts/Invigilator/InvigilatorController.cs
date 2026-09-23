@@ -402,8 +402,9 @@ public class InvigilatorController : MonoBehaviour
         agent.speed = distractedSpeed;
         wasLocked = false;
 
-        // Whatever they were suspicious about, it's someone else's problem now.
-        if (suspicion != null) suspicion.ClearLock();
+        // Whatever they were suspicious about, it's someone else's problem now:
+        // the bar dumps to zero and stops climbing until they're done with them.
+        if (suspicion != null) suspicion.ResetToZero();
 
         if (agent.isOnNavMesh && TrySamplePoint(point, distractedStandoff, out Vector3 spot))
             agent.SetDestination(spot);

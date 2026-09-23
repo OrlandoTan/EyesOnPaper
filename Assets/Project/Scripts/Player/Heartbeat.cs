@@ -15,6 +15,12 @@ public class Heartbeat : MonoBehaviour
     [Tooltip("Suspicion (0-1) below which you hear nothing.")]
     [SerializeField, Range(0f, 1f)] float startAt = 0.15f;
 
+    [Header("Response")]
+    [Tooltip("How fast it speeds up when suspicion rises (per second). High = panic is instant.")]
+    [SerializeField] float riseSpeed = 6f;
+    [Tooltip("How fast it calms down again. Low = the adrenaline lingers.")]
+    [SerializeField] float fallSpeed = 0.5f;
+
     [Header("Rate")]
     [SerializeField] float minBPM = 65f;                 // just above startAt
     [SerializeField] float maxBPM = 150f;                // at 100%
@@ -58,7 +64,9 @@ public class Heartbeat : MonoBehaviour
     void Update()
     {
         float target = suspicion != null ? suspicion.Value01 : 0f;
-        smoothed = Mathf.MoveTowards(smoothed, target, Time.deltaTime * 0.6f);   // no sudden jumps
+        // Fast attack, slow release: panic hits at once, calm comes back gradually.
+        float speed = target > smoothed ? riseSpeed : fallSpeed;
+        smoothed = Mathf.MoveTowards(smoothed, target, Time.deltaTime * speed);
 
         float intensity = Mathf.Pow(Mathf.InverseLerp(startAt, 1f, smoothed), intensityCurve);
         bool active = smoothed > startAt;

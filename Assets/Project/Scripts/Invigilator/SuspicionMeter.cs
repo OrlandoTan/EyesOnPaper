@@ -51,6 +51,12 @@ public class SuspicionMeter : MonoBehaviour
     [Tooltip("Decay while locked on. Much slower than normal - being seen has to cost something.")]
     [SerializeField] private float lockedDecay = 1f;
 
+    [Header("Distraction")]
+    [Tooltip("The invigilator. While they are distracted, nothing raises suspicion.")]
+    [SerializeField] private InvigilatorController invigilator;
+    [Tooltip("Seconds for the bar to dump to zero when a distraction starts. 0 = instant.")]
+    [SerializeField] private float drainTime = 0.4f;
+
     [Header("Buzz")]
     [Tooltip("Off by default. Jack's timing isn't the player's choice, so punishing it " +
              "is a dice roll - and SCOPE's first pillar says errors must trace back to " +
@@ -83,10 +89,12 @@ public class SuspicionMeter : MonoBehaviour
     private float lookAwayTimer;
     private float lockTimer;
     private bool caughtFired;
+    private bool draining;
 
     private void Awake()
     {
         if (vision == null) vision = GetComponentInChildren<VisionCone>();
+        if (invigilator == null) invigilator = GetComponent<InvigilatorController>();
     }
 
     private void OnEnable()
@@ -112,6 +120,26 @@ public class SuspicionMeter : MonoBehaviour
         if (IsFrozen) return;
 
         lockTimer -= Time.deltaTime;
+
+        // Dumping to zero after a distraction: nothing else matters until it's empty.
+        if (draining)
+        {
+            float rate = drainTime > 0.01f ? 100f / drainTime : 100f / Mathf.Max(0.0001f, Time.deltaTime);
+            Value = Mathf.Max(0f, Value - rate * Time.deltaTime);
+            RefreshTier();
+            LastRatePerSecond = -rate;
+            if (Value <= 0f) draining = false;
+            return;
+        }
+
+        // Busy with someone else: they can't be building a case against you at the same time.
+        if (invigilator != null && invigilator.IsDistracted)
+        {
+            lookAwayTimer = 0f;
+            LastReason = "distracted - not watching you";
+            LastRatePerSecond = 0f;
+            return;
+        }
 
         float perSecond = IsLocked ? -lockedDecay : -decay;
         bool seen = vision != null && vision.CanSeePlayer;
@@ -219,6 +247,17 @@ public class SuspicionMeter : MonoBehaviour
     {
         lockTimer = 0f;
         lookAwayTimer = 0f;
+    }
+
+    /// <summary>
+    /// A distraction wipes the slate: the bar dumps to zero (over drainTime, so it reads as
+    /// relief rather than a glitch) and nothing accumulates while they're dealing with it.
+    /// </summary>
+    public void ResetToZero()
+    {
+        ClearLock();
+        draining = true;
+        LastReason = "distracted - forgetting about you";
     }
 
     private void Freeze()
