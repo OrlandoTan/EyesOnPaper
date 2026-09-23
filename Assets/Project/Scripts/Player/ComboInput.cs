@@ -49,7 +49,7 @@ public class ComboInput : MonoBehaviour
     public event Action OnSequenceRevealed;        // every arrow of the current pattern is now visible
 
     // Seconds to reveal the whole pattern, arrow by arrow, while you're looking at the phone.
-    // 0 = instant (Jack's messages). Set by SelfCheat for the Notes combo.
+    // 0 = instant. Set by SelfCheat for the Notes combo.
     public float RevealTime { get; set; } = 0f;
     public IReadOnlyList<Arrow> Sequence => sequence;
     public bool FullyRevealed => revealed >= sequence.Count;
@@ -61,11 +61,11 @@ public class ComboInput : MonoBehaviour
     [Tooltip("An arrow pressed this long before its icon appears still counts, instead of being dropped.")]
     [SerializeField] float inputBufferTime = 0.15f;
 
-    // When false this combo ignores the keyboard (e.g. your own combo while Jack's message is open).
+    // When false this combo ignores the keyboard (e.g. while a distraction has borrowed the arrow keys).
     public bool AcceptInput { get; set; } = true;
 
-    // Only one combo may read the arrow keys at a time. When a combo takes input
-    // (Jack's message), every other combo ignores the keyboard until it's released.
+    // Only one combo may read the arrow keys at a time. When a combo takes input,
+    // every other combo ignores the keyboard until it's released.
     static ComboInput inputOwner;
     static float inputBlockedUntil;          // brief grace after a hand-back, so in-flight keys don't leak
     const float ReleaseGrace = 0.3f;
@@ -198,7 +198,7 @@ public class ComboInput : MonoBehaviour
             // Not visible yet - but remember the press, so someone reading ahead
             // of the animation doesn't simply lose the input. Only buffered here:
             // a press blocked because another combo owns the keyboard is never
-            // stored, or it would leak across from Jack's message to this one.
+            // stored, or it would leak across from that combo to this one.
             Arrow? early = ReadArrow();
             if (early != null)
             {

@@ -22,7 +22,9 @@ public class TitleMenu : MonoBehaviour
         "Mouse|look around",
         "Hold Space|take out your phone",
         "Arrow keys|enter the arrow combo",
+        "Right mouse|lean in over your paper",
         "Click or 1-4|mark an answer",
+        "Hold left click|hand in your paper",
         "Q|make a classmate drop a pencil",
         "G|call a classmate, phone must be out",
         "F|make a classmate shout, once per exam",
@@ -30,9 +32,9 @@ public class TitleMenu : MonoBehaviour
 
     [TextArea(3, 8)]
     [SerializeField] private string rules =
-        "Jack texts you the answers. Each message shows for three seconds, then it is gone for good.\n" +
-        "Reading one means entering an arrow combo with your phone out, where anyone could see it.\n" +
-        "The invigilator is watching. Listen for footsteps.\n" +
+        "Your phone is under the desk. Hold Space to look at it and enter the arrow combo shown.\n" +
+        "It gives you one answer, once. Remember it while you look up and mark the sheet.\n" +
+        "The invigilator is watching. Listen for footsteps - silence means he has stopped.\n" +
         "Q, G and F pull him away from you. Use them to buy a clean window.";
 
     [Header("Flow")]

@@ -85,13 +85,13 @@ public class SelfCheat : MonoBehaviour
         }
     }
 
-    // JackMessenger pauses your combo while you're reading his message. Progress is kept.
+    // Distractions pause your combo while they borrow the arrow keys. Progress is kept.
     public void SetPaused(bool p)
     {
         paused = p;
         if (combo != null) combo.AcceptInput = !p;
 
-        // Resuming: if Jack just gave you the question you were working on, move on.
+        // Resuming: if the question you were working on got answered meanwhile, move on.
         if (!p && phone != null && phone.IsOut && !showingAnswer && (target < 0 || CheatLog.IsAnswered(target)))
             Retarget();
     }

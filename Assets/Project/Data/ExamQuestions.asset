@@ -16,85 +16,126 @@ MonoBehaviour:
   questions:
   - text: 'In the Thermodynamics of Procrastination, a study session reaches heat death:'
     options:
-    - At 11:59 PM
-    - At 3:00 AM
-    - After one YouTube video
-    - Never
-    correctIndex: 2
+    - 'After one YouTube video'
+    - 'At 11:59 PM'
+    - 'At 3:00 AM'
+    - 'Never'
+    correctIndex: 0
     difficulty: 0
-  - text: Which pencil grade is legally required for bubble sheets in the Republic of Exams?
+  - text: 'Which pencil grade is legally required for bubble sheets in the Republic of Exams?'
     options:
-    - HB
-    - 2B
-    - 4H
-    - A pen, out of spite
+    - 'HB'
+    - '2B'
+    - '4H'
+    - 'A pen, out of spite'
     correctIndex: 1
     difficulty: 0
-  - text: Solve for x, where x is the number of times you have checked the clock.
+  - text: 'Solve for x, where x is the number of times you have checked the clock.'
     options:
-    - 3
-    - 12
-    - x + 1
-    - Too many
-    correctIndex: 2
+    - '3'
+    - '12'
+    - 'Too many'
+    - 'x + 1'
+    correctIndex: 3
     difficulty: 0
   - text: 'The Third Law of Group Projects states:'
     options:
-    - For every action, one person does it
-    - Work expands to fill the deadline
-    - Energy is never conserved
-    - The quiet one knows everything
+    - 'For every action, one person does it'
+    - 'Work expands to fill the deadline'
+    - 'Energy is never conserved'
+    - 'The quiet one knows everything'
     correctIndex: 0
     difficulty: 1
-  - text: What is the primary export of the Faculty of Arts?
+  - text: 'What is the primary export of the Faculty of Arts?'
     options:
-    - Essays
-    - Coffee cups
-    - Opinions
-    - Tote bags
+    - 'Essays'
+    - 'Coffee cups'
+    - 'Opinions'
+    - 'Tote bags'
     correctIndex: 3
     difficulty: 1
-  - text: Which of these is NOT a recognised state of matter?
+  - text: 'Which of these is NOT a recognised state of matter?'
     options:
-    - Solid
-    - Plasma
-    - Soggy
-    - Bose-Einstein condensate
+    - 'Solid'
+    - 'Plasma'
+    - 'Soggy'
+    - 'Bose-Einstein condensate'
     correctIndex: 2
     difficulty: 1
-  - text: Convert 450 pounds of jet fuel to kilograms.
+  - text: 'Convert 450 pounds of jet fuel to kilograms.'
     options:
-    - About 204 kg
-    - About 450 kg
-    - About 992 kg
-    - Ask the pilot
+    - 'About 204 kg'
+    - 'About 450 kg'
+    - 'About 992 kg'
+    - 'Ask the pilot'
     correctIndex: 0
-    difficulty: 1
+    difficulty: 2
   - text: 'In Reason''s error taxonomy, forgetting a step in a checklist is a:'
     options:
-    - Slip
-    - Lapse
-    - Mistake
-    - Violation
+    - 'Slip'
+    - 'Lapse'
+    - 'Mistake'
+    - 'Violation'
     correctIndex: 1
     difficulty: 2
-  - text: A bubble sheet shifted down one row after Q3 can cause how many wrong answers out of 10?
+  - text: 'Under exam conditions, the half-life of a memorised answer is:'
     options:
-    - 1
-    - 3
-    - Up to 7
-    - 0
+    - 'Until you look up'
+    - 'Four seconds'
+    - 'One question'
+    - 'Longer than you think'
+    correctIndex: 0
+    difficulty: 2
+  - text: 'A bubble sheet shifted down one row after Q3 can cause how many wrong answers out of 10?'
+    options:
+    - '1'
+    - '3'
+    - 'Up to 7'
+    - '0'
     correctIndex: 2
     difficulty: 3
-  - text: What is the invigilator thinking about right now?
+  - text: 'What is the invigilator thinking about right now?'
     options:
-    - Lunch
-    - You
-    - Retirement
-    - The heat death of the universe
+    - 'Lunch'
+    - 'You'
+    - 'Retirement'
+    - 'The heat death of the universe'
     correctIndex: 1
     difficulty: 3
+  - text: 'A student checks their sheet twice and changes nothing. They have committed:'
+    options:
+    - 'A slip'
+    - 'A lapse'
+    - 'No error at all'
+    - 'The only correct act in this room'
+    correctIndex: 2
+    difficulty: 3
+  - text: 'You enter an arrow pattern that is one input wrong. The phone will:'
+    options:
+    - 'Refuse it'
+    - 'Show the right answer anyway'
+    - 'Vibrate'
+    - 'Show a wrong answer, confidently'
+    correctIndex: 3
+    difficulty: 4
+  - text: 'The invigilator stops walking. This means:'
+    options:
+    - 'He is tired'
+    - 'He is watching someone'
+    - 'Nothing at all'
+    - 'You have already lost'
+    correctIndex: 1
+    difficulty: 4
+  - text: 'The most dangerous moment in an exam is:'
+    options:
+    - 'The first question'
+    - 'The final minute'
+    - 'The moment you feel safe'
+    - 'The moment the room empties'
+    correctIndex: 2
+    difficulty: 4
   easyLength: 4
   mediumLength: 6
   hardLength: 8
   extremeLength: 10
+  impossibleLength: 12

@@ -1214,10 +1214,10 @@ MonoBehaviour:
     Click / 1-4     mark an answer
 
 
-    Jack texts you answers. Each one shows for three seconds, then it''s gone for good.
+    The phone gives you one answer, once. Remember it while you mark the sheet.
 
     The invigilator is watching. Don''t get caught looking.'
-  examDuration: 160
+  examDuration: 300
   showPlaceholderUI: 1
   restartKey: 32
   lowTimeWarning: 30
@@ -1262,6 +1262,10 @@ MonoBehaviour:
   callUses: 2
   ringDelay: 1.5
   callNeedsPhoneOut: 1
+  callCooldown: 45
+  dialPattern: ULDR
+  dialTimeout: 6
+  dialAccent: {r: 0.35, g: 0.78, b: 1, a: 1}
   shoutKey: 20
   shoutDuration: 16
   shoutUses: 1
@@ -1280,6 +1284,7 @@ MonoBehaviour:
   departure: {fileID: 0}
   suspicion: {fileID: 0}
   showPrompts: 1
+  logEvents: 1
 --- !u!1001 &276134567
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4765,6 +4770,37 @@ Transform:
   - {fileID: 1075260359}
   m_Father: {fileID: 1561872244}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1208207829
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1208207830}
+  m_Layer: 0
+  m_Name: Clock
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1208207830
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1208207829}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.784, y: 0.777, z: 4.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1212943092
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6224,8 +6260,10 @@ MonoBehaviour:
   farGainMultiplier: 0.6
   lockDuration: 6
   lockedDecay: 1
+  invigilator: {fileID: 0}
+  drainTime: 0.4
   buzzAlertsInvigilator: 0
-  buzzSpikeNear: 25
+  buzzSpikeNear: 8
   buzzSpikeFar: 4
   buzzHearRadius: 6
 --- !u!114 &1517777465
@@ -8333,6 +8371,68 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7766752913780566752, guid: 5328a2e47b5c2471599b3556dfd737dc, type: 3}
   m_PrefabInstance: {fileID: 1976191626}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1989170623
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1989170625}
+  - component: {fileID: 1989170624}
+  m_Layer: 0
+  m_Name: Ambience
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1989170624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1989170623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dee4639719e5e463299dbca0ab2d4752, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomAmbience
+  roomTone: {fileID: 8300000, guid: 7ce51e825ff3942cca374c9f42803781, type: 3}
+  roomToneVolume: 0.15
+  clockTick: {fileID: 8300000, guid: 6117a502cfc874f91bc199969a095c0d, type: 3}
+  clockPosition: {fileID: 1208207830}
+  clockVolume: 0.2
+  clockRange: 12
+  writingLoop: {fileID: 8300000, guid: c3fd5f12c9a924d48befebfacfcb7e77, type: 3}
+  writingVolumeFull: 0.28
+  classCentre: {fileID: 2088311882}
+  writingRange: 14
+  writingFadeSpeed: 0.5
+  coughs:
+  - {fileID: 8300000, guid: 1c5822cd760104a39b35f9ada4b3e493, type: 3}
+  - {fileID: 8300000, guid: a07d9205c419044f097cc20fd672c72c, type: 3}
+  paperShuffles:
+  - {fileID: 8300000, guid: ba22c7373f71649148b90c42e5edc435, type: 3}
+  oneShotEvery: {x: 14, y: 32}
+  oneShotVolume: 0.5
+--- !u!4 &1989170625
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1989170623}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2016695856
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8884,3 +8984,5 @@ SceneRoots:
   - {fileID: 428354157}
   - {fileID: 1586736129}
   - {fileID: 1251627138}
+  - {fileID: 1989170625}
+  - {fileID: 1208207830}

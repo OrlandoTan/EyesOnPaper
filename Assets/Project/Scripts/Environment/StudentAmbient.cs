@@ -52,7 +52,11 @@ public class StudentAmbient : MonoBehaviour
         if (animator != null && animator.runtimeAnimatorController != null)
         {
             animator.applyRootMotion = false;
-            animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;   // cheaper when off-screen (WebGL)
+            // CullUpdateTransforms still evaluates the state machine and retargeting
+            // for off-screen students; CullCompletely skips that too. Seated facing
+            // forward, most of the class is behind the player at any moment, and
+            // WebGL runs all of this on one thread.
+            animator.cullingMode = AnimatorCullingMode.CullCompletely;
             animator.speed = Random.Range(speedRange.x, speedRange.y);
 
             var state = animator.GetCurrentAnimatorStateInfo(0);

@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
         "Arrow keys      enter the arrow combo\n" +
         "Click / 1-4     mark an answer\n" +
         "\n" +
-        "Jack texts you answers. Each one shows for three seconds, then it's gone for good.\n" +
+        "The phone gives you one answer, once. Remember it while you mark the sheet.\n" +
         "The invigilator is watching. Don't get caught looking.";
 
     [Header("Exam")]
@@ -59,7 +59,7 @@ public class GameManager : MonoBehaviour
         if (startAtTitle)
         {
             Current = State.Title;
-            Time.timeScale = 0f;    // holds the invigilator, the phone and Jack all still
+            Time.timeScale = 0f;    // holds the invigilator and the phone still
         }
         else
         {

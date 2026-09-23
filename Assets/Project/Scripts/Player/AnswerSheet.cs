@@ -266,14 +266,22 @@ public class AnswerSheet : MonoBehaviour
         MakeText(root, title, new Vector2(0f, titleY), new Vector2(sheetSize.x - 200f, 140f), 90f, FontStyles.Bold);
         MakeText(root, "NAME: ________________", new Vector2(0f, nameY), new Vector2(sheetSize.x - 200f, nameHeight), 56f, FontStyles.Normal);
 
-        // Row 1 starts below the NAME line, never overlapping it
+        // Row 1 starts below the NAME line, never overlapping it.
+        // Long papers shrink the spacing and the bubbles so every row, and the
+        // HAND IN box, still land on the page. Short papers are left alone.
+        float bottomLimit = -sheetSize.y * 0.5f + 300f;      // room for the HAND IN box
+        float provisionalTop = nameY - nameHeight * 0.5f - headerGap - bubbleSize * 0.5f;
+        float rowSpan = provisionalTop - bubbleSize * 0.5f - bottomLimit;
+        float gap = exam.Count > 1 ? Mathf.Min(rowGap, rowSpan / (exam.Count - 1)) : rowGap;
+        if (gap < bubbleSize * 1.2f) bubbleSize = gap / 1.2f;
+
         float firstRowY = nameY - nameHeight * 0.5f - headerGap - bubbleSize * 0.5f;
 
         float xOffset = 150f;     // leave room on the left for question numbers
         notes = new TMP_Text[exam.Count];
         for (int q = 0; q < exam.Count; q++)
         {
-            float y = firstRowY - q * rowGap;
+            float y = firstRowY - q * gap;
             MakeText(root, $"{q + 1}.", new Vector2(-1.5f * columnGap - 260f + xOffset, y), new Vector2(200f, bubbleSize), 72f, FontStyles.Bold);
 
             for (int c = 0; c < 4; c++)
@@ -288,7 +296,7 @@ public class AnswerSheet : MonoBehaviour
             notes[q] = note;
         }
 
-        float lastRowY = firstRowY - (exam.Count - 1) * rowGap;
+        float lastRowY = firstRowY - (exam.Count - 1) * gap;
         BuildHandIn(root, lastRowY - bubbleSize * 0.5f - 160f);
     }
 

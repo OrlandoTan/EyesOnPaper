@@ -222,8 +222,8 @@ public class StudentDistractions : MonoBehaviour
         dialProgress = 0;
         dialUntil = Time.time + dialTimeout;
 
-        // The phone combos use the same arrow keys, so borrow them the way
-        // JackMessenger borrows them from the Notes combo, and give them back after.
+        // The phone combos use the same arrow keys, so borrow them here
+        // and give them back when the distraction is over.
         phoneCombos = FindObjectsByType<ComboInput>(FindObjectsInactive.Include);
         comboWasAccepting = new bool[phoneCombos.Length];
         for (int i = 0; i < phoneCombos.Length; i++)
@@ -271,7 +271,7 @@ public class StudentDistractions : MonoBehaviour
             return;
         }
 
-        if (Time.time > dialUntil || kb[callKey].wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame)
+        if (Time.time > dialUntil || kb[callKey].wasPressedThisFrame)   // no Escape: in WebGL it releases the mouse lock
         {
             EndDial();
             Hint("call cancelled");

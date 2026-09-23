@@ -157,8 +157,7 @@ public class ResultsScreen : MonoBehaviour
         sb.Append($"<size=120%>You cheated on <b>{cheated.Count}/{exam.Count}</b> questions. ");
         sb.Append(caught ? $"You would have scored <b>{correctCount}/{exam.Count}</b>.</size>\n"
                          : $"You scored <b>{correctCount}/{exam.Count}</b>.</size>\n");
-        sb.Append($"<color={Grey}>Time {Mathf.FloorToInt(timeUsed / 60f)}:{Mathf.FloorToInt(timeUsed % 60f):00}   ·   ");
-        sb.Append($"Jack messages missed: {CheatLog.MissedMessages.Count}");
+        sb.Append($"<color={Grey}>Time {Mathf.FloorToInt(timeUsed / 60f)}:{Mathf.FloorToInt(timeUsed % 60f):00}");
         if (bonus > 0) sb.Append($"   ·   Early hand-in bonus +{bonus}");
         sb.Append("</color>\n\n");
         string gradeDetail = caught ? "Fail - misconduct" : $"{GradeName(grade)}, {Mathf.RoundToInt(pct * 100f)}%";
@@ -189,9 +188,15 @@ public class ResultsScreen : MonoBehaviour
         paper.sizeDelta = new Vector2(1250f, 1000f);
 
         headerText  = MakeText(paper, new Vector2(0f, 400f),  new Vector2(1150f, 160f), 64f, TextAlignmentOptions.Center);
-        rowsText    = MakeText(paper, new Vector2(0f, 60f),   new Vector2(460f, 520f), 32f, TextAlignmentOptions.TopLeft);
-        summaryText = MakeText(paper, new Vector2(0f, -360f), new Vector2(1150f, 260f), 26f, TextAlignmentOptions.Center);
-        rowsText.lineSpacing = 12f;
+        rowsText    = MakeText(paper, new Vector2(0f, 40f),   new Vector2(600f, 540f), 30f, TextAlignmentOptions.TopLeft);
+        summaryText = MakeText(paper, new Vector2(0f, -368f), new Vector2(1150f, 255f), 26f, TextAlignmentOptions.Center);
+        rowsText.lineSpacing = 6f;
+
+        // The row list grows with the question count, so let it shrink to fit its
+        // box instead of overflowing down into the summary underneath.
+        rowsText.enableAutoSizing = true;
+        rowsText.fontSizeMin = 16f;
+        rowsText.fontSizeMax = 30f;
     }
 
     static RectTransform MakeImage(Transform parent, string name, Color color)

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum CheatSource { Self, Jack, Paper }
+public enum CheatSource { Self, Paper }
 
-// Shared record of every answer the player has seen, and every Jack message they missed.
+// Shared record of every answer the player has seen.
 // The results screen compares this against what was written on the answer sheet.
 public static class CheatLog
 {
@@ -14,26 +14,17 @@ public static class CheatLog
         public int answer;          // 0-3 (A-D), always the correct one
         public CheatSource source;
         public float time;
-        public int batch;           // Jack messages: answers from the same text share a batch id
-    }
-
-    public class Missed
-    {
-        public List<int> questions;
-        public float time;
     }
 
     static readonly List<Entry> entries = new List<Entry>();
-    static readonly List<Missed> missed = new List<Missed>();
 
     public static IReadOnlyList<Entry> Entries => entries;
-    public static IReadOnlyList<Missed> MissedMessages => missed;
 
     public static event Action<Entry> OnRevealed;
 
     // "Is this question done?" Defaults to "has its answer been revealed".
     // AnswerSheet will replace this with "has something been written on the sheet",
-    // so a forgotten Jack answer sends your own cheat back to that question.
+    // so a question you saw but never wrote down comes back around.
     public static Func<int, bool> IsAnswered = IsRevealed;
 
     public static bool IsRevealed(int q) => entries.Exists(e => e.question == q);
@@ -45,17 +36,12 @@ public static class CheatLog
         return -1;
     }
 
-    public static void Reveal(int question, int answer, CheatSource source, int batch = 0)
+    public static void Reveal(int question, int answer, CheatSource source)
     {
-        var e = new Entry { question = question, answer = answer, source = source, time = Time.time, batch = batch };
+        var e = new Entry { question = question, answer = answer, source = source, time = Time.time };
         entries.Add(e);
         OnRevealed?.Invoke(e);
         GameEvents.AnswerRevealed(question, answer);
-    }
-
-    public static void MissJack(List<int> questions)
-    {
-        missed.Add(new Missed { questions = new List<int>(questions), time = Time.time });
     }
 
     // Called automatically when Play starts. Call again when restarting the exam.
@@ -63,7 +49,6 @@ public static class CheatLog
     public static void Reset()
     {
         entries.Clear();
-        missed.Clear();
         OnRevealed = null;
         IsAnswered = IsRevealed;
     }
