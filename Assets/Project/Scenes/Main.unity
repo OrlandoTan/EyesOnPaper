@@ -6210,7 +6210,7 @@ MonoBehaviour:
   vision: {fileID: 0}
   mediumAt: 40
   highAt: 75
-  phoneInConeGain: 18
+  phoneInConeGain: 25
   lookAwayGain: 6
   decay: 7
   sidewaysAngle: 50
