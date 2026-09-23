@@ -72,8 +72,8 @@ public class StudentDistractions : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private bool showPrompts = true;
-    [Tooltip("Log which branch a key press takes. Useful when a skill seems to do nothing.")]
-    [SerializeField] private bool logEvents = true;
+    [Tooltip("On-screen state readout plus console logs. Off for builds.")]
+    [SerializeField] private bool logEvents = false;
 
     public float PencilCooldownRemaining => Mathf.Max(0f, pencilReadyAt - Time.time);
     public bool PencilReady => PencilCooldownRemaining <= 0f;
@@ -90,6 +90,7 @@ public class StudentDistractions : MonoBehaviour
     private bool[] comboWasAccepting;
     private ComboInput dialOwner;
     private bool sawStudents;
+    private int[] dialSequence = new int[0];
     private float hintUntil;
     private string hint = "";
     private AudioSource sfx;
@@ -108,6 +109,7 @@ public class StudentDistractions : MonoBehaviour
 
         shoutsLeft = shoutUses;
         callsLeft = callUses;
+        dialSequence = ParsePattern(dialPattern);
 
         // One 3D source, moved to whoever is making the noise. Only ever one
         // distraction at a time, so one source is enough.
@@ -163,6 +165,7 @@ public class StudentDistractions : MonoBehaviour
             else if (callNeedsPhoneOut && (suspicion == null || !suspicion.PhoneIsOut))
                 Reject("hold Space - you need your phone to call");
             else if (invigilator.IsDistracted) Reject("they're already busy");
+            else if (dialSequence.Length == 0) Reject("dial pattern is not set");
             else if (!HaveTarget(out string why)) Reject(why);
             else
             {
@@ -284,7 +287,7 @@ public class StudentDistractions : MonoBehaviour
         if (arrow == ArrowAt(dialProgress))
         {
             dialProgress++;
-            if (dialProgress < dialPattern.Length) return;
+            if (dialProgress < dialSequence.Length) return;
 
             EndDial();
             if (TriggerCall())
@@ -299,11 +302,27 @@ public class StudentDistractions : MonoBehaviour
         Hint("misdialled");
     }
 
-    private int ArrowAt(int index)
+    /// <summary>
+    /// Turns the pattern string into arrows once, dropping anything that is not
+    /// U/D/L/R. A stray character used to make the sequence impossible to finish,
+    /// and an empty field indexed straight off the end of the string.
+    /// </summary>
+    private static int[] ParsePattern(string pattern)
     {
-        char c = char.ToUpperInvariant(dialPattern[index]);
-        return c switch { 'U' => 0, 'D' => 1, 'L' => 2, 'R' => 3, _ => -1 };
+        if (string.IsNullOrWhiteSpace(pattern)) return new int[0];
+
+        var arrows = new System.Collections.Generic.List<int>(pattern.Length);
+        foreach (char raw in pattern)
+        {
+            int a = char.ToUpperInvariant(raw) switch { 'U' => 0, 'D' => 1, 'L' => 2, 'R' => 3, _ => -1 };
+            if (a >= 0) arrows.Add(a);
+        }
+
+        return arrows.ToArray();
     }
+
+    private int ArrowAt(int index) =>
+        index >= 0 && index < dialSequence.Length ? dialSequence[index] : -1;
 
     private static int ReadArrow(Keyboard kb)
     {
@@ -509,7 +528,7 @@ public class StudentDistractions : MonoBehaviour
             dbg.normal.textColor = new Color(0.6f, 0.9f, 1f);
             string state = GameManager.Instance != null ? GameManager.Instance.Current.ToString() : "no GM";
             GUI.Label(new Rect(16f, y - 22f, 520f, 20f),
-                      $"dial:{(dialling ? "ON " + dialProgress + "/" + dialPattern.Length : "off")}  " +
+                      $"dial:{(dialling ? "ON " + dialProgress + "/" + dialSequence.Length : "off")}  " +
                       $"phone:{(suspicion != null && suspicion.PhoneIsOut ? "T" : "F")}  " +
                       $"calls:{callsLeft}  cd:{CallCooldownRemaining:0}  " +
                       $"busy:{(invigilator != null && invigilator.IsDistracted ? "T" : "F")}  " +
@@ -540,7 +559,7 @@ public class StudentDistractions : MonoBehaviour
     {
         string[] glyphs = { "\u2191", "\u2193", "\u2190", "\u2192" };
 
-        int count = Mathf.Max(1, dialPattern.Length);
+        int count = Mathf.Max(1, dialSequence.Length);
         float cell = 56f;
         float pad = 18f;
         float width = Mathf.Max(320f, count * cell + pad * 2f);
@@ -563,7 +582,7 @@ public class StudentDistractions : MonoBehaviour
         float startX = panel.center.x - (count - 1) * cell * 0.5f;
         float y = panel.y + 40f;
 
-        for (int i = 0; i < dialPattern.Length; i++)
+        for (int i = 0; i < dialSequence.Length; i++)
         {
             int a = ArrowAt(i);
             if (a < 0) continue;
